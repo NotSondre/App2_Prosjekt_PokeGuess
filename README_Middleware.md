@@ -1,0 +1,1 @@
+CleanGuess middleware rydder opp i brukerens input ved å fjerne spesialtegn, gjøre teksten om til små bokstaver og ta bort mellomrom og punktum. Dette gjør det lettere å sammenligne gjettingen med navnene i Pokémon-databasen.
