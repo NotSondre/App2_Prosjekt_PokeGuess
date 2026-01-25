@@ -1,20 +1,18 @@
-const express = require('express');
-const path = require('path'); 
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import pokemonRouter from './routes/pokemon.mjs';
+
 const app = express();
-const PORT = 3000;
+const port = 3000;
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 app.use(express.json());
+app.use(express.static('public'));
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use('/api', pokemonRouter);
 
-app.get('/api/status', (req, res) => {
-    res.json({ message: "Kontakt med serveren er opprettet!" });
-});
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.listen(PORT, () => {
-    console.log(`Server kjører på http://localhost:${PORT}`);
+app.listen(port, () => {
+    console.log(`Server kjører på http://localhost:${port}`);
 });
