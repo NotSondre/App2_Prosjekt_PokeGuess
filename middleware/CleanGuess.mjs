@@ -1,15 +1,17 @@
-function CleanGuess(req, res, next) {
-    if (req.body && req.body.guess) {
-        let original = req.body.guess;
+import express from 'express';
+const router = express.Router();
 
-        let cleaned = original.trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+router.post('/guess', (req, res) => {
+    const cleanedGuess = req.body.guess;
+    
+    res.json({ 
+        message: "Gjetting mottatt!", 
+        cleanedData: cleanedGuess 
+    });
+});
 
-        req.body.guess = cleaned;
-        
-        console.log(`Middleware vasket: "${original}" -> "${cleaned}"`);
-    }
+router.get('/status', (req, res) => {
+    res.json({ message: "Serveren er online og snakker med frontend!" });
+});
 
-    next();
-}
-
-export default CleanGuess;
+export default router;
