@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>App2 - PokéGuess</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 50px; }
+        .status-box { border: 2px solid #ccc; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
+        .success { color: green; border-color: green; }
+        .game-area { margin-top: 30px; padding: 20px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>PokéGuess - Middleware Test</h1>
+    
+    <div id="status" class="status-box">Kobler til backend...</div>
+
+    <div class="game-area">
+        <input type="text" id="pokemonInput" placeholder="Skriv Pokémon-navn...">
+        <button onclick="sendGuess()">Gjett!</button>
+        <div id="guessResult" style="margin-top: 15px; font-weight: bold;"></div>
+    </div>
+
+    <script src="app.js" defer></script>
+</body>
+</html>
