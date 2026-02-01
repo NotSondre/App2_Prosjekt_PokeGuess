@@ -1,10 +1,9 @@
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import pokemonRouter from './routes/pokemon.mjs';
+import userRouter from './routes/user.mjs'; 
 
 const app = express();
-const port = 3000;
+const PORT = 3000;
 
 app.use(express.json());
 
@@ -12,6 +11,8 @@ app.use(express.static('public'));
 
 app.use('/api', pokemonRouter);
 
-app.listen(port, () => {
-    console.log(`Server kjører på http://localhost:${port}`);
+app.use('/api/users', userRouter);
+
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
 });
