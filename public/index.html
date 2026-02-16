@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>App2 - PokéGuess</title>
+    <link rel="stylesheet" href="app.css">
     <style>
         body { font-family: sans-serif; text-align: center; padding: 50px; }
         .status-box { border: 2px solid #ccc; padding: 10px; margin-bottom: 20px; border-radius: 5px; }
@@ -15,12 +16,48 @@
     
     <div id="status" class="status-box">Kobler til backend...</div>
 
+    <user-manager></user-manager>
+
     <div class="game-area">
         <input type="text" id="pokemonInput" placeholder="Skriv Pokémon-navn...">
         <button onclick="sendGuess()">Gjett!</button>
         <div id="guessResult" style="margin-top: 15px; font-weight: bold;"></div>
     </div>
 
-    <script src="app.js" defer></script>
+    <template id="user-manager-template">
+        <style>
+            .user-box { 
+                border: 1px solid #ccc; 
+                padding: 15px; 
+                margin: 20px auto; 
+                max-width: 300px; 
+                border-radius: 5px; 
+                text-align: left;
+            }
+            input { display: block; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
+            .btns { display: flex; gap: 5px; }
+            #msg { margin-top: 10px; font-style: italic; color: #555; }
+        </style>
+        <div class="user-box">
+            <input type="text" id="uname" placeholder="Brukernavn">
+            <input type="password" id="psw" placeholder="Passord">
+            <label style="font-size: 0.8em;">
+                <input type="checkbox" id="consent" style="width: auto; display: inline;"> 
+                Jeg godtar vilkårene (ToS/Privacy)
+            </label>
+            <div class="btns">
+                <button id="regBtn">Registrer</button>
+                <button id="delBtn">Slett meg</button>
+            </div>
+            <p id="msg"></p>
+        </div>
+    </template>
+
+    <script type="module" src="app.js"></script>
+
+    <script type="module">
+        import { sendGuess } from './app.js';
+        window.sendGuess = sendGuess;
+    </script>
 </body>
 </html>
