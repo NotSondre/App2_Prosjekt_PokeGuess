@@ -12,7 +12,7 @@
     </style>
 </head>
 <body>
-    <h1>PokéGuess - Middleware Test</h1>
+    <h1>PokéGuess</h1>
     
     <div id="status" class="status-box">Kobler til backend...</div>
 
@@ -30,21 +30,28 @@
                 border: 1px solid #ccc; 
                 padding: 15px; 
                 margin: 20px auto; 
-                max-width: 300px; 
+                max-width: 350px; 
                 border-radius: 5px; 
                 text-align: left;
             }
             input { display: block; width: 100%; margin-bottom: 10px; box-sizing: border-box; }
-            .btns { display: flex; gap: 5px; }
+            .btns { display: flex; gap: 5px; margin-top: 10px; }
             #msg { margin-top: 10px; font-style: italic; color: #555; }
+            a { color: #007bff; text-decoration: none; font-weight: bold; }
+            a:hover { text-decoration: underline; }
+            label { font-size: 0.85em; display: block; margin-bottom: 10px; }
+            #consent { width: auto; display: inline; margin-bottom: 0; margin-right: 5px; }
         </style>
         <div class="user-box">
             <input type="text" id="uname" placeholder="Brukernavn">
             <input type="password" id="psw" placeholder="Passord">
-            <label style="font-size: 0.8em;">
-                <input type="checkbox" id="consent" style="width: auto; display: inline;"> 
-                Jeg godtar vilkårene (ToS/Privacy)
+            
+            <label>
+                <input type="checkbox" id="consent"> 
+                Jeg godtar <a href="Terms%20Of%20Service%20-%20PokeGuesser.pdf" target="_blank">vilkårene (ToS)</a> 
+                og <a href="Privacy%20Policy%20-%20PokeGuesser.pdf" target="_blank">personvernerklæringen</a>.
             </label>
+
             <div class="btns">
                 <button id="regBtn">Registrer</button>
                 <button id="delBtn">Slett meg</button>
