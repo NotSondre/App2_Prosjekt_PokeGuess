@@ -1,49 +1,70 @@
 import express from 'express';
+import pg from 'pg';
+const { Pool } = pg;
+
 const router = express.Router();
 
-const Users = {}; 
-
-export function storeUser(user) {
-    if (user && user.id) {
-        Users[user.id] = user;
-        return true;
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false 
     }
-    return false;
-}
+});
 
-export function deleteUser(name, password) {
-    for (const id in Users) {
-        if (Users[id].name === name && Users[id].psw === password) {
-            delete Users[id];
-            return true;
-        }
-    }
-    return false;
+async function initDb() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            consented BOOLEAN NOT NULL
+        );
+    `);
 }
+initDb();
 
-router.post('/register', (req, res) => {
+// Registrering av ny bruker i databasen [cite: 2026-01-19]
+router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
+    
     if (!consent) {
         return res.status(400).json({ error: "Mangler samtykke (ToS)." });
     }
-    
-    const newUser = { 
-        id: Math.random().toString(16), 
-        name: username, 
-        psw: password, 
-        consented: consent 
-    };
-    
-    storeUser(newUser);
-    res.status(201).json({ message: "Bruker opprettet!", user: { name: username } });
+
+    try {
+        const id = Math.random().toString(16).slice(2);
+        // SQL-spørring for å sette inn brukeren [cite: 2026-01-19]
+        await pool.query(
+            'INSERT INTO users (id, username, password, consented) VALUES ($1, $2, $3, $4)',
+            [id, username, password, consent]
+        );
+        
+        res.status(201).json({ message: "Bruker opprettet i PostgreSQL!", user: { name: username } });
+    } catch (err) {
+        console.error("Databasefeil ved registrering:", err);
+        res.status(500).json({ error: "Kunne ikke opprette bruker (kanskje navnet er tatt?)" });
+    }
 });
 
-router.delete('/delete', (req, res) => {
+// Sletting av bruker fra databasen [cite: 2026-01-19]
+router.delete('/delete', async (req, res) => {
     const { username, password } = req.body;
-    if (deleteUser(username, password)) {
-        res.json({ message: "Bruker slettet." }); 
-    } else {
-        res.status(404).json({ error: "Bruker ikke funnet." });
+
+    try {
+        // SQL-spørring for å slette basert på navn og passord [cite: 2026-01-19]
+        const result = await pool.query(
+            'DELETE FROM users WHERE username = $1 AND password = $2',
+            [username, password]
+        );
+
+        if (result.rowCount > 0) {
+            res.json({ message: "Bruker slettet fra PostgreSQL." });
+        } else {
+            res.status(404).json({ error: "Bruker ikke funnet eller feil passord." });
+        }
+    } catch (err) {
+        console.error("Databasefeil ved sletting:", err);
+        res.status(500).json({ error: "Serverfeil ved sletting." });
     }
 });
 
