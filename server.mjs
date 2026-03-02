@@ -1,18 +1,17 @@
-import express from 'express';
-import pokemonRouter from './routes/pokemon.mjs';
-import userRouter from './routes/user.mjs'; 
+import express from "express";
+import ContentRouter from "./routes/ContentAPI.mjs";
+import UserRouter from "./routes/UserAPI.mjs";
 
+const port = process.env.PORT || 8080;
 const app = express();
-const PORT = 3000;
-
-app.use(express.json());
 
 app.use(express.static('public'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.use('/api', pokemonRouter);
+app.use("/content", ContentRouter);
+app.use("/user", UserRouter);
 
-app.use('/api/users', userRouter);
-
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
