@@ -7,8 +7,9 @@ const translations = {
         connecting: "Kobler til backend...",
         offline: "Du er offline. Viser lagret innhold.",
         tos_error: "Du må godta vilkårene for å opprette bruker.",
-        guess_correct: "Riktig! Det er ",
-        guess_wrong: "Feil Pokémon, prøv igjen!"
+        guess_correct: "Riktig! Det var ",
+        guess_wrong: "Feil Pokémon, prøv igjen!",
+        it_was: "Det var "
     },
     en: {
         network_error: "Network error: Could not reach the server.",
@@ -17,8 +18,9 @@ const translations = {
         connecting: "Connecting to backend...",
         offline: "You are offline. Showing cached content.",
         tos_error: "You must accept the terms to create an account.",
-        guess_correct: "Correct! It is ",
-        guess_wrong: "Wrong Pokémon, try again!"
+        guess_correct: "Correct! It was ",
+        guess_wrong: "Wrong Pokémon, try again!",
+        it_was: "It was "
     }
 };
 
@@ -28,6 +30,7 @@ const t = translations[userLang];
 // --- DATA & LOGIC ---
 const API_BASE = ''; 
 let score = 0; 
+let currentPokemonName = ""; 
 
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
@@ -127,14 +130,26 @@ function updateScoreDisplay() {
     if (scoreElement) scoreElement.innerText = score;
 }
 
+/**
+ * Henter ny Pokémon. 
+ */
 async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
-    if (isSkip) {
-        score = 0;
+    if (isSkip && img && !img.classList.contains('revealed')) {
+        score = 0; 
         updateScoreDisplay();
+        
+        img.classList.add('revealed'); 
+        resultDiv.innerText = `${t.it_was}${currentPokemonName}!`;
+        resultDiv.style.color = "orange";
+
+        setTimeout(() => {
+            startNewGame(false); 
+        }, 2000);
+        return;
     }
 
     if (input) {
@@ -152,12 +167,13 @@ async function startNewGame(isSkip = false) {
     
     if (data && data.imageUrl && img) {
         img.src = data.imageUrl;
+        currentPokemonName = data.name; 
         img.style.display = 'inline-block';
     }
 }
 
 /**
- * Lar spillet fortsette etter riktig gjett
+ * Sender gjett og fortsetter automatisk ved suksess
  */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
@@ -200,7 +216,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const pokemonInput = document.getElementById('pokemonInput');
 
     if (guessBtn) guessBtn.onclick = sendGuess;
-    if (nextBtn) nextBtn.onclick = () => startNewGame(true);
+    
+    if (nextBtn) {
+        nextBtn.onclick = () => startNewGame(true);
+    }
+
     if (pokemonInput) {
         pokemonInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendGuess();
