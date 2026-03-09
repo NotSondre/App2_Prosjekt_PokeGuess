@@ -27,7 +27,7 @@ const t = translations[userLang];
 
 // --- DATA & LOGIC ---
 const API_BASE = ''; 
-let score = 0; // Poengteller [cite: 2026-03-09]
+let score = 0; 
 
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
@@ -67,7 +67,7 @@ class UserManager extends HTMLElement {
         const tosArea = this.shadowRoot.getElementById('tosArea');
         const delBtn = this.shadowRoot.getElementById('delBtn');
 
-        tabLogin.onclick = () => {
+        if(tabLogin) tabLogin.onclick = () => {
             this.mode = 'login';
             tabLogin.classList.add('active');
             tabReg.classList.remove('active');
@@ -75,7 +75,7 @@ class UserManager extends HTMLElement {
             tosArea.classList.remove('visible');
         };
 
-        tabReg.onclick = () => {
+        if(tabReg) tabReg.onclick = () => {
             this.mode = 'register';
             tabReg.classList.add('active');
             tabLogin.classList.remove('active');
@@ -83,12 +83,12 @@ class UserManager extends HTMLElement {
             tosArea.classList.add('visible');
         };
 
-        mainBtn.onclick = () => {
+        if(mainBtn) mainBtn.onclick = () => {
             const endpoint = this.mode === 'login' ? '/user/login' : '/user/register';
             this.handleAction(endpoint, 'POST');
         };
 
-        delBtn.onclick = () => this.handleAction('/user/delete', 'DELETE');
+        if(delBtn) delBtn.onclick = () => this.handleAction('/user/delete', 'DELETE');
     }
 
     async handleAction(endpoint, method) {
@@ -127,21 +127,17 @@ function updateScoreDisplay() {
     if (scoreElement) scoreElement.innerText = score;
 }
 
-/**
- * Henter en ny Pokémon. isSkip er true hvis man trykker "Ny Pokémon".
- */
 async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
-    // Nullstill poeng hvis man hopper over [cite: 2026-03-09]
     if (isSkip) {
         score = 0;
         updateScoreDisplay();
     }
 
-    input.value = "";
+    if (input) input.value = "";
     if (resultDiv) resultDiv.innerText = "";
     if (img) {
         img.classList.remove('revealed');
@@ -156,15 +152,12 @@ async function startNewGame(isSkip = false) {
     }
 }
 
-/**
- * Sender gjettingen og oppdaterer poengsum ved suksess.
- */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
     const img = document.getElementById('pokemonImage');
 
-    if (!input || !input.value || img.classList.contains('revealed')) return;
+    if (!input || !input.value || (img && img.classList.contains('revealed'))) return;
 
     const data = await request('/content/guess', 'POST', { 
         guess: input.value
@@ -175,9 +168,9 @@ async function sendGuess() {
     if (data.success) {
         resultDiv.innerText = data.message; 
         resultDiv.style.color = "green";
-        if (img) img.classList.add('revealed'); 
+        if (img) img.classList.add('revealed'); // AVRELLER bildet
         
-        score++; // Øk poengsum [cite: 2026-03-09]
+        score++; 
         updateScoreDisplay();
     } else {
         resultDiv.innerText = data.message || t.guess_wrong;
@@ -185,11 +178,24 @@ async function sendGuess() {
     }
 }
 
-// Eksponer funksjoner til window
-window.sendGuess = sendGuess;
-window.startNewGame = startNewGame;
+// --- INITIALIZATION & EVENT BINDING ---
 
-// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    const guessBtn = document.getElementById('guessBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pokemonInput = document.getElementById('pokemonInput');
+
+    if (guessBtn) guessBtn.onclick = sendGuess;
+    if (nextBtn) nextBtn.onclick = () => startNewGame(true);
+    if (pokemonInput) {
+        pokemonInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendGuess();
+        });
+    }
+
+    testConnection();
+    startNewGame();
+});
 
 async function testConnection() {
     const statusBox = document.getElementById('status');
@@ -200,21 +206,11 @@ async function testConnection() {
     }
 }
 
-// Lytter for Enter-tast i inputfeltet [cite: 2026-03-09]
-document.getElementById('pokemonInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') sendGuess();
-});
+window.sendGuess = sendGuess;
+window.startNewGame = startNewGame;
 
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-            .then(reg => console.log('SW registrert'))
-            .catch(err => console.error('SW feilet', err));
-    });
+    navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registrert'))
+        .catch(err => console.error('SW feilet', err));
 }
-
-testConnection();
-startNewGame();
-
-const nextBtn = document.getElementById('nextBtn');
-if (nextBtn) nextBtn.onclick = () => startNewGame(true);
