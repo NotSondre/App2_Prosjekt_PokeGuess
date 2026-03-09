@@ -2,7 +2,9 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>App2 - PokéGuess</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="app.css">
     <style>
         body { font-family: sans-serif; text-align: center; padding: 50px; }
@@ -14,14 +16,14 @@
 <body>
     <h1>PokéGuess</h1>
     
-    <div id="status" class="status-box">Kobler til backend...</div>
+    <div id="status" class="status-box" aria-live="polite">Kobler til backend...</div>
 
     <user-manager></user-manager>
 
     <div class="game-area">
-        <input type="text" id="pokemonInput" placeholder="Skriv Pokémon-navn...">
-        <button onclick="sendGuess()">Gjett!</button>
-        <div id="guessResult" style="margin-top: 15px; font-weight: bold;"></div>
+        <input type="text" id="pokemonInput" placeholder="Skriv Pokémon-navn..." aria-label="Pokémon navn">
+        <button onclick="sendGuess()" aria-label="Send gjett">Gjett!</button>
+        <div id="guessResult" style="margin-top: 15px; font-weight: bold;" aria-live="polite"></div>
     </div>
 
     <template id="user-manager-template">
@@ -43,25 +45,24 @@
             #consent { width: auto; display: inline; margin-bottom: 0; margin-right: 5px; }
         </style>
         <div class="user-box">
-            <input type="text" id="uname" placeholder="Brukernavn">
-            <input type="password" id="psw" placeholder="Passord">
+            <input type="text" id="uname" placeholder="Brukernavn" aria-label="Brukernavn">
+            <input type="password" id="psw" placeholder="Passord" aria-label="Passord">
             
             <label>
-                <input type="checkbox" id="consent"> 
+                <input type="checkbox" id="consent" aria-label="Godta vilkår"> 
                 Jeg godtar <a href="Terms%20Of%20Service%20-%20PokeGuesser.pdf" target="_blank">vilkårene (ToS)</a> 
                 og <a href="Privacy%20Policy%20-%20PokeGuesser.pdf" target="_blank">personvernerklæringen</a>.
             </label>
 
             <div class="btns">
-                <button id="regBtn">Registrer</button>
-                <button id="delBtn">Slett meg</button>
+                <button id="regBtn" aria-label="Registrer bruker">Registrer</button>
+                <button id="delBtn" aria-label="Slett bruker">Slett meg</button>
             </div>
-            <p id="msg"></p>
+            <p id="msg" aria-live="polite"></p>
         </div>
     </template>
 
     <script type="module" src="app.js"></script>
-
     <script type="module">
         import { sendGuess } from './app.js';
         window.sendGuess = sendGuess;
