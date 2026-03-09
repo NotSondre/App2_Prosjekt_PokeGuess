@@ -170,6 +170,50 @@ async function startNewGame(isSkip = false) {
         currentPokemonName = data.name; 
         img.style.display = 'inline-block';
     }
+}async function startNewGame(isSkip = false) {
+    const img = document.getElementById('pokemonImage');
+    const resultDiv = document.getElementById('guessResult');
+    const input = document.getElementById('pokemonInput');
+    
+    if (isSkip && img && !img.classList.contains('revealed')) {
+        score = 0; 
+        updateScoreDisplay();
+        
+        img.classList.add('revealed'); 
+        const nameToShow = currentPokemonName || "denne Pokémonen";
+        resultDiv.innerText = `${t.it_was}${nameToShow}!`;
+        resultDiv.style.color = "orange";
+
+        setTimeout(() => {
+            startNewGame(false); 
+        }, 2000);
+        return;
+    }
+
+    if (input) {
+        input.value = "";
+        input.focus(); 
+    }
+    
+    if (resultDiv) resultDiv.innerText = "";
+
+    if (img) {
+        img.classList.remove('revealed');
+        img.style.visibility = 'hidden'; 
+    }
+
+    const data = await request('/content/pokemon');
+    
+    console.log("Svar fra server:", data);
+
+    if (data && data.imageUrl && img) {
+        img.src = data.imageUrl;
+        
+        currentPokemonName = data.name || data.pokemon || data.id || "Ukjent";
+        
+        img.style.visibility = 'visible';
+        img.style.display = 'inline-block'; 
+    }
 }
 
 /**
