@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokeguess-cache-v3';
+const CACHE_NAME = 'pokeguess-cache-v4'; 
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,15 +7,39 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting(); 
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('Caching nye filer...');
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cache => {
+          if (cache !== CACHE_NAME) {
+            console.log('Sletter gammel cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim()) 
   );
 });
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  if (url.pathname.startsWith('/content') || url.pathname.startsWith('/user') || url.pathname.startsWith('/status')) {
+  const isApi = url.pathname.startsWith('/content') || 
+                url.pathname.startsWith('/user') || 
+                url.pathname.startsWith('/status');
+  const isPdf = url.pathname.toLowerCase().endsWith('.pdf');
+
+  if (isApi || isPdf) {
     event.respondWith(fetch(event.request));
     return;
   }

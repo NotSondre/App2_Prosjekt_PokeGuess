@@ -131,50 +131,14 @@ function updateScoreDisplay() {
 }
 
 /**
- * Henter ny Pokémon. 
+ * Henter ny Pokémon og håndterer "Vet Ikke" (skip) logikk.
  */
 async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
-    if (isSkip && img && !img.classList.contains('revealed')) {
-        score = 0; 
-        updateScoreDisplay();
-        
-        img.classList.add('revealed'); 
-        resultDiv.innerText = `${t.it_was}${currentPokemonName}!`;
-        resultDiv.style.color = "orange";
-
-        setTimeout(() => {
-            startNewGame(false); 
-        }, 2000);
-        return;
-    }
-
-    if (input) {
-        input.value = "";
-        input.focus(); 
-    }
-    
-    if (resultDiv) resultDiv.innerText = "";
-    if (img) {
-        img.classList.remove('revealed');
-        img.style.display = 'none';
-    }
-
-    const data = await request('/content/pokemon');
-    
-    if (data && data.imageUrl && img) {
-        img.src = data.imageUrl;
-        currentPokemonName = data.name; 
-        img.style.display = 'inline-block';
-    }
-}async function startNewGame(isSkip = false) {
-    const img = document.getElementById('pokemonImage');
-    const resultDiv = document.getElementById('guessResult');
-    const input = document.getElementById('pokemonInput');
-    
+    // Hvis man gir opp (Skip)
     if (isSkip && img && !img.classList.contains('revealed')) {
         score = 0; 
         updateScoreDisplay();
@@ -203,13 +167,14 @@ async function startNewGame(isSkip = false) {
     }
 
     const data = await request('/content/pokemon');
-    
-    console.log("Svar fra server:", data);
+    console.log("Svar fra server:", data); 
 
     if (data && data.imageUrl && img) {
         img.src = data.imageUrl;
         
-        currentPokemonName = data.name || data.pokemon || data.id || "Ukjent";
+        const keys = Object.keys(data);
+        const nameKey = keys.find(k => k !== 'imageUrl' && typeof data[k] === 'string');
+        currentPokemonName = data[nameKey] || data.name || data.pokemon || "Ukjent";
         
         img.style.visibility = 'visible';
         img.style.display = 'inline-block'; 
