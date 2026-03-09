@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokeguess-cache-v4'; 
+const CACHE_NAME = 'pokeguess-cache-v5'; 
 const urlsToCache = [
   '/',
   '/index.html',
@@ -34,13 +34,20 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
+  const isRender = url.hostname.includes('onrender.com');
   const isApi = url.pathname.startsWith('/content') || 
                 url.pathname.startsWith('/user') || 
                 url.pathname.startsWith('/status');
   const isPdf = url.pathname.toLowerCase().endsWith('.pdf');
 
-  if (isApi || isPdf) {
-    event.respondWith(fetch(event.request));
+  if (isRender || isApi || isPdf) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({ error: "Kunne ikke koble til serveren" }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
     return;
   }
 

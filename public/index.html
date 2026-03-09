@@ -22,7 +22,6 @@
         .status-box { border: 2px solid #000; padding: 10px; margin: 10px auto; max-width: 300px; border-radius: 5px; background: #fff; }
         .success { color: #004d00; border-color: #004d00; background-color: #e6fffa; }
         
-        /* Poengsum-visning */
         .score-board { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #000; }
 
         .game-area { 
@@ -30,30 +29,34 @@
             border-radius: 15px; background: #fff; display: inline-block; min-width: 320px;
         }
 
-        #pokemonImage { width: 200px; height: 200px; filter: brightness(0); transition: filter 0.5s ease; margin-bottom: 20px; }
-        #pokemonImage.revealed { filter: brightness(1); }
+        /* Låser bildebeholderen så ingenting hopper */
+        #imgContainer {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9f9f9;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #pokemonImage { 
+            max-width: 100%;
+            max-height: 100%;
+            filter: brightness(0); 
+            transition: filter 0.5s ease;
+            /* Starter som usynlig men tar opp plass */
+            visibility: hidden; 
+        }
+
+        #pokemonImage.revealed { filter: brightness(1); visibility: visible !important; }
 
         input, button { min-height: 44px; font-size: 1rem; padding: 5px 15px; border: 2px solid #000; border-radius: 5px; }
         button { cursor: pointer; background: #000; color: #fff; font-weight: bold; }
         button:hover { background: #333; }
         #nextBtn { background: #eee; color: #000; margin-left: 5px; }
-
-        #imgContainer {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto 20px auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px; 
-}
-
-#pokemonImage { 
-    max-width: 100%;
-    max-height: 100%;
-    filter: brightness(0); 
-    transition: filter 0.5s ease; 
-}
 
     </style>
 </head>
@@ -71,7 +74,7 @@
 
         <div class="game-area" role="region" aria-label="Spillområde">
             <div id="imgContainer">
-                <img id="pokemonImage" src="" alt="Hvilken Pokémon?" style="display: none;">
+                <img id="pokemonImage" src="" alt="Hvilken Pokémon?">
             </div>
             
             <input type="text" id="pokemonInput" placeholder="Navn..." aria-label="Pokémon navn">
@@ -99,7 +102,7 @@
             .tos-area { font-size: 0.8rem; margin-top: 10px; display: none; }
             .tos-area.visible { display: block; }
             #msg { margin-top: 10px; font-style: italic; color: #000; }
-            a { color: #0000EE; font-weight: bold; }
+            a { color: #0000EE; font-weight: bold; text-decoration: underline; }
         </style>
         <div class="user-box" role="form">
             <div class="tabs">
@@ -108,13 +111,15 @@
             </div>
             <input type="text" id="uname" placeholder="Brukernavn" aria-label="Brukernavn">
             <input type="password" id="psw" placeholder="Passord" aria-label="Passord">
+            
             <div id="tosArea" class="tos-area">
-    <label>
-        <input type="checkbox" id="consent"> 
-        Godta <a href="Terms%20Of%20Service%20-%20PokeGuesser.pdf" target="_blank">ToS</a> & 
-        <a href="Privacy%20Policy%20-%20PokeGuesser.pdf" target="_blank">Privacy Policy</a>
-    </label>
-</div>
+                <label>
+                    <input type="checkbox" id="consent"> 
+                    Godta <a href="Terms%20Of%20Service%20-%20PokeGuesser.pdf" target="_blank">ToS</a> & 
+                    <a href="Privacy%20Policy%20-%20PokeGuesser.pdf" target="_blank">Privacy Policy</a>
+                </label>
+            </div>
+
             <button id="mainActionBtn" class="action-btn">Logg inn</button>
             <p id="msg" aria-live="polite"></p>
             <span id="delBtn" class="del-link">Slett konto</span>
@@ -123,7 +128,9 @@
 
     <script type="module" src="app.js"></script>
     <script>
-        document.getElementById('toggleLogin').onclick = () => document.getElementById('userMenu').classList.toggle('active');
+        document.getElementById('toggleLogin').onclick = () => {
+            document.getElementById('userMenu').classList.toggle('active');
+        };
     </script>
 </body>
 </html>
