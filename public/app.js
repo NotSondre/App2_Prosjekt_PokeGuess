@@ -6,7 +6,9 @@ const translations = {
         fill_fields: "Vennligst fyll ut brukernavn og passord.",
         connecting: "Kobler til backend...",
         offline: "Du er offline. Viser lagret innhold.",
-        tos_error: "Du må godta vilkårene for å opprette bruker."
+        tos_error: "Du må godta vilkårene for å opprette bruker.",
+        guess_correct: "Riktig! Det er ",
+        guess_wrong: "Feil Pokémon, prøv igjen!"
     },
     en: {
         network_error: "Network error: Could not reach the server.",
@@ -14,7 +16,9 @@ const translations = {
         fill_fields: "Please fill in both username and password.",
         connecting: "Connecting to backend...",
         offline: "You are offline. Showing cached content.",
-        tos_error: "You must accept the terms to create an account."
+        tos_error: "You must accept the terms to create an account.",
+        guess_correct: "Correct! It is ",
+        guess_wrong: "Wrong Pokémon, try again!"
     }
 };
 
@@ -43,6 +47,7 @@ async function request(endpoint, method = 'GET', data = null) {
     }
 }
 
+// --- USER MANAGER COMPONENT ---
 class UserManager extends HTMLElement {
     constructor() {
         super();
@@ -114,23 +119,73 @@ class UserManager extends HTMLElement {
 
 customElements.define('user-manager', UserManager);
 
-async function testConnection() {
-    const statusBox = document.getElementById('status');
-    const result = await request('/status');
-    if (result.message) {
-        statusBox.innerText = result.message;
-        statusBox.classList.add('success');
+// --- GAME LOGIC ---
+
+/**
+ * Henter en ny Pokémon fra serveren og nullstiller spillfeltet.
+ */
+async function startNewGame() {
+    const img = document.getElementById('pokemonImage');
+    const resultDiv = document.getElementById('guessResult');
+    const input = document.getElementById('pokemonInput');
+    
+    // Nullstill UI
+    input.value = "";
+    if (resultDiv) resultDiv.innerText = "";
+    if (img) {
+        img.classList.remove('revealed');
+        img.style.display = 'none';
+    }
+
+    const data = await request('/content/pokemon');
+    
+    if (data && data.imageUrl && img) {
+        img.src = data.imageUrl;
+        img.style.display = 'inline-block';
     }
 }
 
+/**
+ * Sender gjettingen til serveren og viser resultatet.
+ */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
+    const img = document.getElementById('pokemonImage');
+
+    if (!input.value) return;
+
     const data = await request('/content/guess', 'POST', { 
-        username: "testUser", 
         guess: input.value
     });
-    if (resultDiv) resultDiv.innerText = data.message || data.error;
+
+    if (data.success) {
+        if (resultDiv) {
+            resultDiv.innerText = data.message;
+            resultDiv.style.color = "green";
+        }
+        if (img) img.classList.add('revealed');
+    } else {
+        if (resultDiv) {
+            resultDiv.innerText = data.message || t.guess_wrong;
+            resultDiv.style.color = "red";
+        }
+    }
+}
+
+// Eksponer funksjoner til window for HTML-tilgang
+window.sendGuess = sendGuess;
+window.startNewGame = startNewGame;
+
+// --- INITIALIZATION ---
+
+async function testConnection() {
+    const statusBox = document.getElementById('status');
+    const result = await request('/status');
+    if (result && result.message && statusBox) {
+        statusBox.innerText = result.message;
+        statusBox.classList.add('success');
+    }
 }
 
 if ('serviceWorker' in navigator) {
@@ -141,4 +196,10 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Start applikasjonen
 testConnection();
+startNewGame();
+
+// Koble til "Ny Pokémon"-knapp hvis den finnes i HTML
+const nextBtn = document.getElementById('nextBtn');
+if (nextBtn) nextBtn.onclick = startNewGame;
