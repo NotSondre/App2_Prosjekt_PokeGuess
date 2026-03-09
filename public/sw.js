@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pokeguess-cache-v2'; 
+const CACHE_NAME = 'pokeguess-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -11,7 +11,11 @@ self.addEventListener('install', event => {
     caches.open(CACHE_NAME)
       .then(cache => {
         console.log('Caching assets...');
-        return cache.addAll(urlsToCache);
+        return Promise.all(
+          urlsToCache.map(url => {
+            return cache.add(url).catch(err => console.error('Feilet ved caching av:', url, err));
+          })
+        );
       })
   );
 });
