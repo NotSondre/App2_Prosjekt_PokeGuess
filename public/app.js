@@ -28,7 +28,7 @@ const userLang = navigator.language.startsWith('nb') || navigator.language.start
 const t = translations[userLang];
 
 // --- DATA & LOGIC ---
-const API_BASE = ''; 
+const API_BASE = 'https://app2-prosjekt-pokeguess.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
 
@@ -138,7 +138,6 @@ async function startNewGame(isSkip = false) {
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
-    // Hvis man gir opp (Skip)
     if (isSkip && img && !img.classList.contains('revealed')) {
         score = 0; 
         updateScoreDisplay();
@@ -162,13 +161,14 @@ async function startNewGame(isSkip = false) {
     if (resultDiv) resultDiv.innerText = "";
 
     if (img) {
-        img.classList.remove('revealed');
+        // --- VIKTIG ENDRING HER ---
+        img.classList.remove('revealed'); 
+        img.src = "";                    
         img.style.visibility = 'hidden'; 
     }
 
     const data = await request('/content/pokemon');
-    console.log("Svar fra server:", data); 
-
+    
     if (data && data.imageUrl && img) {
         img.src = data.imageUrl;
         
