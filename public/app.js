@@ -151,24 +151,32 @@ async function startNewGame() {
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
-    const img = document.getElementById('pokemonImage');
+    const img = document.getElementById('pokemonImage'); // Hent bilde-elementet
 
-    if (!input.value) return;
+    if (!input || !input.value) return;
 
+    // Send gjetting til backend
     const data = await request('/content/guess', 'POST', { 
         guess: input.value
     });
 
+    if (!resultDiv) return;
+
     if (data.success) {
-        if (resultDiv) {
-            resultDiv.innerText = data.message;
-            resultDiv.style.color = "green";
+        // RIKTIG GJETT
+        resultDiv.innerText = data.message; 
+        resultDiv.style.color = "green";
+        
+        if (img) {
+            img.classList.add('revealed'); 
         }
-        if (img) img.classList.add('revealed');
     } else {
-        if (resultDiv) {
-            resultDiv.innerText = data.message || t.guess_wrong;
-            resultDiv.style.color = "red";
+        // FEIL GJETT
+        resultDiv.innerText = data.message || t.guess_wrong;
+        resultDiv.style.color = "red";
+        
+        if (img) {
+            img.classList.remove('revealed'); 
         }
     }
 }
