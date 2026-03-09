@@ -137,7 +137,11 @@ async function startNewGame(isSkip = false) {
         updateScoreDisplay();
     }
 
-    if (input) input.value = "";
+    if (input) {
+        input.value = "";
+        input.focus(); 
+    }
+    
     if (resultDiv) resultDiv.innerText = "";
     if (img) {
         img.classList.remove('revealed');
@@ -152,6 +156,9 @@ async function startNewGame(isSkip = false) {
     }
 }
 
+/**
+ * Lar spillet fortsette etter riktig gjett
+ */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
@@ -168,10 +175,17 @@ async function sendGuess() {
     if (data.success) {
         resultDiv.innerText = data.message; 
         resultDiv.style.color = "green";
-        if (img) img.classList.add('revealed'); // AVRELLER bildet
+        if (img) img.classList.add('revealed'); 
         
         score++; 
         updateScoreDisplay();
+
+        setTimeout(() => {
+            if (img && img.classList.contains('revealed')) {
+                startNewGame(false); 
+            }
+        }, 1500);
+
     } else {
         resultDiv.innerText = data.message || t.guess_wrong;
         resultDiv.style.color = "red";
