@@ -1,0 +1,22 @@
+{
+  "short_name": "PokéGuess",
+  "name": "PokéGuess - Hvem er den Pokémon?",
+  "description": "Et gjettespill for Pokémon-entusiaster.",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/25.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#f4f4f4",
+  "background_color": "#f4f4f4"
+}
