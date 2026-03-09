@@ -27,6 +27,7 @@ const t = translations[userLang];
 
 // --- DATA & LOGIC ---
 const API_BASE = ''; 
+let score = 0; // Poengteller [cite: 2026-03-09]
 
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
@@ -121,15 +122,25 @@ customElements.define('user-manager', UserManager);
 
 // --- GAME LOGIC ---
 
+function updateScoreDisplay() {
+    const scoreElement = document.getElementById('currentScore');
+    if (scoreElement) scoreElement.innerText = score;
+}
+
 /**
- * Henter en ny Pokémon fra serveren og nullstiller spillfeltet.
+ * Henter en ny Pokémon. isSkip er true hvis man trykker "Ny Pokémon".
  */
-async function startNewGame() {
+async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
-    // Nullstill UI
+    // Nullstill poeng hvis man hopper over [cite: 2026-03-09]
+    if (isSkip) {
+        score = 0;
+        updateScoreDisplay();
+    }
+
     input.value = "";
     if (resultDiv) resultDiv.innerText = "";
     if (img) {
@@ -146,16 +157,15 @@ async function startNewGame() {
 }
 
 /**
- * Sender gjettingen til serveren og viser resultatet.
+ * Sender gjettingen og oppdaterer poengsum ved suksess.
  */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
-    const img = document.getElementById('pokemonImage'); // Hent bilde-elementet
+    const img = document.getElementById('pokemonImage');
 
-    if (!input || !input.value) return;
+    if (!input || !input.value || img.classList.contains('revealed')) return;
 
-    // Send gjetting til backend
     const data = await request('/content/guess', 'POST', { 
         guess: input.value
     });
@@ -163,25 +173,19 @@ async function sendGuess() {
     if (!resultDiv) return;
 
     if (data.success) {
-        // RIKTIG GJETT
         resultDiv.innerText = data.message; 
         resultDiv.style.color = "green";
+        if (img) img.classList.add('revealed'); 
         
-        if (img) {
-            img.classList.add('revealed'); 
-        }
+        score++; // Øk poengsum [cite: 2026-03-09]
+        updateScoreDisplay();
     } else {
-        // FEIL GJETT
         resultDiv.innerText = data.message || t.guess_wrong;
         resultDiv.style.color = "red";
-        
-        if (img) {
-            img.classList.remove('revealed'); 
-        }
     }
 }
 
-// Eksponer funksjoner til window for HTML-tilgang
+// Eksponer funksjoner til window
 window.sendGuess = sendGuess;
 window.startNewGame = startNewGame;
 
@@ -196,6 +200,11 @@ async function testConnection() {
     }
 }
 
+// Lytter for Enter-tast i inputfeltet [cite: 2026-03-09]
+document.getElementById('pokemonInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') sendGuess();
+});
+
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
@@ -204,10 +213,8 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Start applikasjonen
 testConnection();
 startNewGame();
 
-// Koble til "Ny Pokémon"-knapp hvis den finnes i HTML
 const nextBtn = document.getElementById('nextBtn');
-if (nextBtn) nextBtn.onclick = startNewGame;
+if (nextBtn) nextBtn.onclick = () => startNewGame(true);

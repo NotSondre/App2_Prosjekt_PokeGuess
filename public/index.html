@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PokéGuess - Gjett Pokémon og test kunnskapene dine.">
+    <meta name="description" content="PokéGuess - Gjett Pokémon og øk poengsummen din.">
     <title>App2 - PokéGuess</title>
     <link rel="manifest" href="manifest.json">
     <style>
@@ -19,12 +19,15 @@
         user-manager { display: none; position: absolute; top: 70px; right: 20px; z-index: 99; }
         user-manager.active { display: block; }
 
-        .status-box { border: 2px solid #000; padding: 10px; margin: 20px auto; max-width: 300px; border-radius: 5px; background: #fff; }
+        .status-box { border: 2px solid #000; padding: 10px; margin: 10px auto; max-width: 300px; border-radius: 5px; background: #fff; }
         .success { color: #004d00; border-color: #004d00; background-color: #e6fffa; }
         
+        /* Poengsum-visning */
+        .score-board { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #000; }
+
         .game-area { 
-            margin-top: 20px; padding: 30px; border: 3px solid #000; 
-            border-radius: 15px; background: #fff; display: inline-block; min-width: 300px;
+            margin-top: 10px; padding: 30px; border: 3px solid #000; 
+            border-radius: 15px; background: #fff; display: inline-block; min-width: 320px;
         }
 
         #pokemonImage { width: 200px; height: 200px; filter: brightness(0); transition: filter 0.5s ease; margin-bottom: 20px; }
@@ -45,6 +48,8 @@
         <div id="status" class="status-box" aria-live="polite">Kobler til backend...</div>
         
         <user-manager id="userMenu"></user-manager>
+
+        <div class="score-board">Poeng: <span id="currentScore">0</span></div>
 
         <div class="game-area" role="region" aria-label="Spillområde">
             <div id="imgContainer">
