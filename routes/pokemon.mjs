@@ -6,7 +6,7 @@ let currentAnswer = "";
 
 router.get('/pokemon', async (req, res) => {
     try {
-        const randomId = Math.floor(Math.random() * 151) + 1; // De originale 151 [cite: 2026-03-09]
+        const randomId = Math.floor(Math.random() * 1025) + 1;
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
         const data = await response.json();
         
