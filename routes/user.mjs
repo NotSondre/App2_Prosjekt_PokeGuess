@@ -19,13 +19,13 @@ async function initDb() {
                 id TEXT PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                consented BOOLEAN NOT NULL,
+                consented BOOLEAN NOT NULL DEFAULT TRUE,
                 score INTEGER DEFAULT 0
             );
         `);
         console.log("Database initialisert: Tabellen 'users' er klar.");
     } catch (err) {
-        console.error("Feil ved initialisering av database:", err.message);
+        console.error("Kritisk feil ved initialisering av database:", err.message);
     }
 }
 initDb();
@@ -34,37 +34,42 @@ initDb();
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     
+    // Logg innkommende data for debugging i Render
+    console.log("Registeringsforsok mottatt for:", username);
+
     if (!username || !password) {
         return res.status(400).json({ error: "Brukernavn og passord kreves." });
     }
 
-    if (consent !== true && consent !== "true") {
-        return res.status(400).json({ error: "Du må godta vilkårene (ToS) for å lage bruker." });
+    const hasConsented = (consent === true || consent === "true");
+
+    if (!hasConsented) {
+        return res.status(400).json({ error: "Du ma godta vilkarene (ToS) for a lage bruker." });
     }
 
     try {
         const id = Math.random().toString(16).slice(2);
-        
-        // Vasker dataene
         const cleanUser = username.trim();
         const cleanPass = password.trim();
-        const hasConsented = true; 
 
         await pool.query(
             'INSERT INTO users (id, username, password, consented) VALUES ($1, $2, $3, $4)',
-            [id, cleanUser, cleanPass, hasConsented]
+            [id, cleanUser, cleanPass, true]
         );
         
-        console.log(`Ny bruker opprettet: ${cleanUser}`);
-        res.status(201).json({ message: "Bruker opprettet! Du kan nå logge inn.", user: { name: cleanUser } });
+        console.log("Bruker opprettet i DB:", cleanUser);
+        res.status(201).json({ 
+            message: "Bruker opprettet! Du kan na logge inn.", 
+            user: { name: cleanUser } 
+        });
 
     } catch (err) {
         if (err.code === '23505') {
-            return res.status(400).json({ error: "Brukernavnet er allerede tatt. Velg et annet." });
+            return res.status(400).json({ error: "Brukernavnet er allerede tatt." });
         }
         
-        console.error(" Databasefeil ved registrering:", err.message);
-        res.status(500).json({ error: "Serverfeil: Kunne ikke opprette bruker." });
+        console.error("Databasefeil ved registrering:", err.message);
+        res.status(500).json({ error: "Serverfeil: Kunne ikke opprette bruker i databasen." });
     }
 });
 
@@ -86,7 +91,7 @@ router.post('/login', async (req, res) => {
         );
 
         if (result.rows.length > 0) {
-            console.log(`🔑 Bruker logget inn: ${cleanUser}`);
+            console.log("Logget inn:", cleanUser);
             res.json({ 
                 message: "Logget inn!", 
                 user: { 
@@ -108,7 +113,7 @@ router.delete('/delete', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ error: "Mangler brukernavn eller passord for å slette." });
+        return res.status(400).json({ error: "Mangler brukernavn eller passord." });
     }
 
     try {
@@ -118,7 +123,7 @@ router.delete('/delete', async (req, res) => {
         );
 
         if (result.rowCount > 0) {
-            console.log(`Bruker slettet: ${username}`);
+            console.log("Slettet bruker:", username);
             res.json({ message: "Bruker slettet fra databasen." });
         } else {
             res.status(404).json({ error: "Fant ikke brukeren eller feil passord." });
