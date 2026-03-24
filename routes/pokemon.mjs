@@ -52,11 +52,15 @@ router.get('/pokemon', async (req, res) => {
 });
 
 router.post('/guess', cleanGuess, (req, res) => {
-    const { guess } = req.body; 
+    const { guess } = req.body;
 
     if (!guess) return res.status(400).json({ error: "Mangler gjetting" });
 
-    if (guess === currentAnswer) {
+    const shortAnswer = currentAnswer.split(' ')[0];
+
+    const isCorrect = guess === currentAnswer || guess === shortAnswer;
+
+    if (isCorrect) {
         res.json({ 
             success: true, 
             message: `Riktig! Det er ${currentAnswer.toUpperCase()}!` 
