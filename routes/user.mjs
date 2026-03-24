@@ -13,14 +13,6 @@ const pool = new Pool({
     }
 });
 
-pool.connect((err, client, release) => {
-    if (err) {
-        console.error("DB tilkoblingstest feilet:", err.message, err.stack);
-    } else {
-        console.log("DB tilkoblingstest OK!");
-        release();
-    }
-});
 
 async function initDb() {
     try {
