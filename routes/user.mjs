@@ -1,8 +1,10 @@
 import express from 'express';
 import pg from 'pg';
+import bcrypt from 'bcrypt';
 const { Pool } = pg;
 
 const router = express.Router();
+const SALT_ROUNDS = 12;
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -11,9 +13,6 @@ const pool = new Pool({
     }
 });
 
-/**
- Initialiserer databasen. 
- */
 async function initDb() {
     try {
         await pool.query(`
@@ -43,9 +42,6 @@ async function initDb() {
 }
 initDb();
 
-/**
- REGISTRERING
- */
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     
@@ -56,7 +52,6 @@ router.post('/register', async (req, res) => {
     }
 
     const hasConsented = (consent === true || consent === "true");
-
     if (!hasConsented) {
         return res.status(400).json({ error: "Du ma godta vilkarene (ToS) for a lage bruker." });
     }
@@ -66,9 +61,11 @@ router.post('/register', async (req, res) => {
         const cleanUser = username.trim();
         const cleanPass = password.trim();
 
+        const hashedPassword = await bcrypt.hash(cleanPass, SALT_ROUNDS);
+
         await pool.query(
             'INSERT INTO users (id, username, password, consented) VALUES ($1, $2, $3, $4)',
-            [id, cleanUser, cleanPass, true]
+            [id, cleanUser, hashedPassword, true]
         );
         
         console.log("Bruker opprettet i DB:", cleanUser);
@@ -81,15 +78,11 @@ router.post('/register', async (req, res) => {
         if (err.code === '23505') {
             return res.status(400).json({ error: "Brukernavnet er allerede tatt." });
         }
-        
         console.error("Databasefeil ved registrering:", err.message);
         res.status(500).json({ error: "Serverfeil: Kunne ikke opprette bruker i databasen." });
     }
 });
 
-/**
- INNLOGGING
- */
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -102,31 +95,34 @@ router.post('/login', async (req, res) => {
         const cleanPass = password.trim();
 
         const result = await pool.query(
-            'SELECT username, score FROM users WHERE username = $1 AND password = $2',
-            [cleanUser, cleanPass]
+            'SELECT username, password, score FROM users WHERE username = $1',
+            [cleanUser]
         );
 
-        if (result.rows.length > 0) {
-            console.log("Logget inn:", cleanUser);
-            res.json({ 
-                message: "Logget inn!", 
-                user: { 
-                    name: result.rows[0].username,
-                    score: result.rows[0].score 
-                } 
-            });
-        } else {
-            res.status(401).json({ error: "Feil brukernavn eller passord." });
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: "Feil brukernavn eller passord." });
         }
+
+        const passwordMatch = await bcrypt.compare(cleanPass, result.rows[0].password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: "Feil brukernavn eller passord." });
+        }
+
+        console.log("Logget inn:", cleanUser);
+        res.json({ 
+            message: "Logget inn!", 
+            user: { 
+                name: result.rows[0].username,
+                score: result.rows[0].score 
+            } 
+        });
+
     } catch (err) {
         console.error("Databasefeil ved innlogging:", err.message);
         res.status(500).json({ error: "Serverfeil ved innlogging." });
     }
 });
 
-/**
- SLETTING
- */
 router.delete('/delete', async (req, res) => {
     const { username, password } = req.body;
 
@@ -135,17 +131,28 @@ router.delete('/delete', async (req, res) => {
     }
 
     try {
+        const cleanUser = username.trim();
+        const cleanPass = password.trim();
+
         const result = await pool.query(
-            'DELETE FROM users WHERE username = $1 AND password = $2',
-            [username.trim(), password.trim()]
+            'SELECT password FROM users WHERE username = $1',
+            [cleanUser]
         );
 
-        if (result.rowCount > 0) {
-            console.log("Slettet bruker:", username);
-            res.json({ message: "Bruker slettet fra databasen." });
-        } else {
-            res.status(404).json({ error: "Fant ikke brukeren eller feil passord." });
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Fant ikke brukeren eller feil passord." });
         }
+
+        const passwordMatch = await bcrypt.compare(cleanPass, result.rows[0].password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: "Fant ikke brukeren eller feil passord." });
+        }
+
+        await pool.query('DELETE FROM users WHERE username = $1', [cleanUser]);
+
+        console.log("Slettet bruker:", username);
+        res.json({ message: "Bruker slettet fra databasen." });
+
     } catch (err) {
         console.error("Databasefeil ved sletting:", err.message);
         res.status(500).json({ error: "Serverfeil ved sletting." });
