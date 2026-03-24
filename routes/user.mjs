@@ -12,18 +12,24 @@ const pool = new Pool({
 });
 
 async function initDb() {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS users (
-            id TEXT PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            consented BOOLEAN NOT NULL
-        );
-    `);
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                consented BOOLEAN NOT NULL,
+                score INTEGER DEFAULT 0
+            );
+        `);
+        console.log("✅ Database initialisert: Tabellen 'users' er klar.");
+    } catch (err) {
+        console.error("❌ Feil ved initialisering av database:", err);
+    }
 }
 initDb();
 
-// Registrering av ny bruker i databasen [cite: 2026-01-19]
+
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     
@@ -33,32 +39,56 @@ router.post('/register', async (req, res) => {
 
     try {
         const id = Math.random().toString(16).slice(2);
-        // SQL-spørring for å sette inn brukeren [cite: 2026-01-19]
         await pool.query(
             'INSERT INTO users (id, username, password, consented) VALUES ($1, $2, $3, $4)',
             [id, username, password, consent]
         );
         
-        res.status(201).json({ message: "Bruker opprettet i PostgreSQL!", user: { name: username } });
+        res.status(201).json({ message: "Bruker opprettet!", user: { name: username } });
     } catch (err) {
         console.error("Databasefeil ved registrering:", err);
         res.status(500).json({ error: "Kunne ikke opprette bruker (kanskje navnet er tatt?)" });
     }
 });
 
-// Sletting av bruker fra databasen [cite: 2026-01-19]
+router.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+        return res.status(400).json({ error: "Brukernavn og passord kreves." });
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT username FROM users WHERE username = $1 AND password = $2',
+            [username, password]
+        );
+
+        if (result.rows.length > 0) {
+            res.json({ 
+                message: "Logget inn!", 
+                user: { name: result.rows[0].username } 
+            });
+        } else {
+            res.status(401).json({ error: "Feil brukernavn eller passord." });
+        }
+    } catch (err) {
+        console.error("Databasefeil ved innlogging:", err);
+        res.status(500).json({ error: "Serverfeil ved innlogging." });
+    }
+});
+
 router.delete('/delete', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        // SQL-spørring for å slette basert på navn og passord [cite: 2026-01-19]
         const result = await pool.query(
             'DELETE FROM users WHERE username = $1 AND password = $2',
             [username, password]
         );
 
         if (result.rowCount > 0) {
-            res.json({ message: "Bruker slettet fra PostgreSQL." });
+            res.json({ message: "Bruker slettet fra databasen." });
         } else {
             res.status(404).json({ error: "Bruker ikke funnet eller feil passord." });
         }
