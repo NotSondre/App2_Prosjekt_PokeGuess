@@ -257,18 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    testConnection();
     startNewGame();
 });
-
-async function testConnection() {
-    const statusBox = document.getElementById('status');
-    const result = await request('/status');
-    if (result && result.message && statusBox) {
-        statusBox.innerText = result.message;
-        statusBox.classList.add('success');
-    }
-}
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
