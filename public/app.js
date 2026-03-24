@@ -28,7 +28,7 @@ const userLang = navigator.language.startsWith('nb') || navigator.language.start
 const t = translations[userLang];
 
 // --- DATA & LOGIC ---
-const API_BASE = 'https://poke-guessr.onrender.com/'; 
+const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
 
