@@ -151,6 +151,7 @@ async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
+    const regionSelect = document.getElementById('regionSelect');
     
     // Håndter "Vet Ikke" (Skip)
     if (isSkip && img && !img.classList.contains('revealed')) {
@@ -178,22 +179,26 @@ async function startNewGame(isSkip = false) {
         img.src = "";
     }
 
-    const data = await request('/content/pokemon');
-    console.log("Pokémon data mottatt:", data);
+    // --- NY LOGIKK FOR REGION ---
+    const selectedRegion = regionSelect ? regionSelect.value : 'all';
+    
+    const data = await request(`/content/pokemon?region=${selectedRegion}&t=${Date.now()}`);
+    
+    console.log("Pokémon data mottatt for region:", selectedRegion, data);
 
-    const bildeUrl = data.imageUrl || data.image || data.url;
-
-    if (data && bildeUrl && img) {
-        img.src = bildeUrl;
+    if (data && !data.error) {
+        const bildeUrl = data.imageUrl || data.image || data.url;
         
-        currentPokemonName = data.name || data.pokemon || data.navn || "Ukjent";
-        
-        // Vis bildet som skygge
-        img.onload = () => {
-            img.style.visibility = 'visible';
-        };
+        if (img && bildeUrl) {
+            img.src = bildeUrl;
+            currentPokemonName = data.name || data.pokemon || "Ukjent";
+            
+            img.onload = () => {
+                img.style.visibility = 'visible';
+            };
+        }
     } else {
-        console.error("Fant ingen bilde-URL i serverresponsen.");
+        console.error("Kunne ikke hente Pokémon-data:", data.error);
     }
 }
 
@@ -237,9 +242,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const guessBtn = document.getElementById('guessBtn');
     const nextBtn = document.getElementById('nextBtn');
     const pokemonInput = document.getElementById('pokemonInput');
+    const regionSelect = document.getElementById('regionSelect');
 
     if (guessBtn) guessBtn.onclick = sendGuess;
     if (nextBtn) nextBtn.onclick = () => startNewGame(true);
+
+    if (regionSelect) {
+        regionSelect.onchange = () => startNewGame(false);
+    }
 
     if (pokemonInput) {
         pokemonInput.addEventListener('keypress', (e) => {

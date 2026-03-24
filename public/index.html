@@ -24,12 +24,24 @@
         
         .score-board { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #000; }
 
+        /* Styling for regions-velgeren */
+        .region-container { margin-bottom: 15px; }
+        #regionSelect { 
+            width: 100%; 
+            max-width: 320px; 
+            padding: 8px; 
+            background: #fff; 
+            border: 2px solid #000; 
+            border-radius: 5px; 
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .game-area { 
             margin-top: 10px; padding: 30px; border: 3px solid #000; 
             border-radius: 15px; background: #fff; display: inline-block; min-width: 320px;
         }
 
-        /* Låser bildebeholderen så ingenting hopper */
         #imgContainer {
             width: 200px;
             height: 200px;
@@ -47,13 +59,12 @@
             max-height: 100%;
             filter: brightness(0); 
             transition: filter 0.5s ease;
-            /* Starter som usynlig men tar opp plass */
             visibility: hidden; 
         }
 
         #pokemonImage.revealed { filter: brightness(1); visibility: visible !important; }
 
-        input, button { min-height: 44px; font-size: 1rem; padding: 5px 15px; border: 2px solid #000; border-radius: 5px; }
+        input, button, select { min-height: 44px; font-size: 1rem; padding: 5px 15px; border: 2px solid #000; border-radius: 5px; }
         button { cursor: pointer; background: #000; color: #fff; font-weight: bold; }
         button:hover { background: #333; }
         #nextBtn { background: #eee; color: #000; margin-left: 5px; }
@@ -71,6 +82,21 @@
         <user-manager id="userMenu"></user-manager>
 
         <div class="score-board">Poeng: <span id="currentScore">0</span></div>
+
+        <div class="region-container">
+            <select id="regionSelect" aria-label="Velg region">
+                <option value="all">Alle Generasjoner (1-9)</option>
+                <option value="gen1">Gen 1: Kanto (1-151)</option>
+                <option value="gen2">Gen 2: Johto (152-251)</option>
+                <option value="gen3">Gen 3: Hoenn (252-386)</option>
+                <option value="gen4">Gen 4: Sinnoh (387-493)</option>
+                <option value="gen5">Gen 5: Unova (494-649)</option>
+                <option value="gen6">Gen 6: Kalos (650-721)</option>
+                <option value="gen7">Gen 7: Alola (722-809)</option>
+                <option value="gen8">Gen 8: Galar (810-905)</option>
+                <option value="gen9">Gen 9: Paldea (906-1025)</option>
+            </select>
+        </div>
 
         <div class="game-area" role="region" aria-label="Spillområde">
             <div id="imgContainer">

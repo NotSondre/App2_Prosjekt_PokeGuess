@@ -7,7 +7,25 @@ let currentAnswer = "";
 
 router.get('/pokemon', async (req, res) => {
     try {
-        const randomId = Math.floor(Math.random() * 1025) + 1;
+        // Hent region fra URL-en (f.eks. /content/pokemon?region=hoenn)
+        const region = req.query.region;
+        
+        let min = 1;
+        let max = 1025;
+
+        // Logikk for å sette grensene basert på valgt region
+        if (region === 'kanto') { max = 151; }
+        else if (region === 'johto') { min = 152; max = 251; }
+        else if (region === 'hoenn') { min = 252; max = 386; }
+        else if (region === 'sinnoh') { min = 387; max = 493; }
+        else if (region === 'unova') { min = 494; max = 649; }
+        else if (region === 'kalos') { min = 650; max = 721; }
+        else if (region === 'alola') { min = 722; max = 809; }
+        else if (region === 'galar') { min = 810; max = 898; }
+        else if (region === 'hisui') { min = 899; max = 905; }
+        else if (region === 'paldea') { min = 906; max = 1025; }
+        const randomId = Math.floor(Math.random() * (max - min + 1)) + min;
+        
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
         const data = await response.json();
         
@@ -15,7 +33,7 @@ router.get('/pokemon', async (req, res) => {
         
         res.json({ 
             imageUrl: data.sprites.other['official-artwork'].front_default,
-            id: randomId // Nyttig for debugging
+            id: randomId 
         });
     } catch (err) {
         res.status(500).json({ error: "Kunne ikke hente Pokémon" });
