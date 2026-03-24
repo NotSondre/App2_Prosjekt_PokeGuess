@@ -32,6 +32,9 @@ const API_BASE = 'https://app2-prosjekt-pokeguess.onrender.com';
 let score = 0; 
 let currentPokemonName = ""; 
 
+/**
+ * Generisk funksjon for API-kall med feilhåndtering
+ */
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
         method: method,
@@ -42,11 +45,12 @@ async function request(endpoint, method = 'GET', data = null) {
     try {
         const response = await fetch(`${API_BASE}${endpoint}`, options);
         if (!response.ok) {
-            const errorData = await response.json();
+            const errorData = await response.json().catch(() => ({}));
             return { error: errorData.error || t.server_error };
         }
         return await response.json();
     } catch (err) {
+        console.error("Fetch-feil:", err);
         return { error: t.network_error };
     }
 }
@@ -102,21 +106,31 @@ class UserManager extends HTMLElement {
 
         if (!username || !password) {
             msgBox.innerText = t.fill_fields;
+            msgBox.style.color = "red";
             return;
         }
 
         if (this.mode === 'register' && !consent) {
             msgBox.innerText = t.tos_error;
+            msgBox.style.color = "red";
             return;
         }
 
         const result = await request(endpoint, method, { username, password, consent });
-        msgBox.innerText = result.message || result.error;
-
-        if (result.message && this.mode === 'login') {
-            setTimeout(() => {
-                this.classList.remove('active');
-            }, 1500);
+        
+        if (result.error) {
+            msgBox.innerText = result.error;
+            msgBox.style.color = "red";
+        } else {
+            msgBox.innerText = result.message;
+            msgBox.style.color = "green";
+            
+            if (this.mode === 'login') {
+                localStorage.setItem('pokemon_user', username);
+                setTimeout(() => {
+                    this.parentElement.classList.remove('active');
+                }, 1500);
+            }
         }
     }
 }
@@ -131,58 +145,60 @@ function updateScoreDisplay() {
 }
 
 /**
- * Henter ny Pokémon og håndterer "Vet Ikke" (skip) logikk.
+ * Henter ny Pokémon og styrer visning av bilder
  */
 async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
+    // Håndter "Vet Ikke" (Skip)
     if (isSkip && img && !img.classList.contains('revealed')) {
         score = 0; 
         updateScoreDisplay();
         
         img.classList.add('revealed'); 
+        img.style.visibility = 'visible';
         const nameToShow = currentPokemonName || "denne Pokémonen";
-        resultDiv.innerText = `${t.it_was}${nameToShow}!`;
-        resultDiv.style.color = "orange";
+        if (resultDiv) {
+            resultDiv.innerText = `${t.it_was}${nameToShow}!`;
+            resultDiv.style.color = "orange";
+        }
 
-        setTimeout(() => {
-            startNewGame(false); 
-        }, 2000);
+        setTimeout(() => startNewGame(false), 2000);
         return;
     }
 
-    if (input) {
-        input.value = "";
-        input.focus(); 
-    }
-    
+    // Nullstill UI for ny runde
+    if (input) { input.value = ""; input.focus(); }
     if (resultDiv) resultDiv.innerText = "";
-
     if (img) {
-        // --- VIKTIG ENDRING HER ---
         img.classList.remove('revealed'); 
-        img.src = "";                    
         img.style.visibility = 'hidden'; 
+        img.src = "";
     }
 
     const data = await request('/content/pokemon');
-    
-    if (data && data.imageUrl && img) {
-        img.src = data.imageUrl;
+    console.log("Pokémon data mottatt:", data);
+
+    const bildeUrl = data.imageUrl || data.image || data.url;
+
+    if (data && bildeUrl && img) {
+        img.src = bildeUrl;
         
-        const keys = Object.keys(data);
-        const nameKey = keys.find(k => k !== 'imageUrl' && typeof data[k] === 'string');
-        currentPokemonName = data[nameKey] || data.name || data.pokemon || "Ukjent";
+        currentPokemonName = data.name || data.pokemon || data.navn || "Ukjent";
         
-        img.style.visibility = 'visible';
-        img.style.display = 'inline-block'; 
+        // Vis bildet som skygge
+        img.onload = () => {
+            img.style.visibility = 'visible';
+        };
+    } else {
+        console.error("Fant ingen bilde-URL i serverresponsen.");
     }
 }
 
 /**
- * Sender gjett og fortsetter automatisk ved suksess
+ Sender gjett til serveren
  */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
@@ -198,26 +214,24 @@ async function sendGuess() {
     if (!resultDiv) return;
 
     if (data.success) {
-        resultDiv.innerText = data.message; 
+        resultDiv.innerText = data.message || `${t.guess_correct}${currentPokemonName}!`; 
         resultDiv.style.color = "green";
-        if (img) img.classList.add('revealed'); 
+        if (img) {
+            img.classList.add('revealed');
+            img.style.visibility = 'visible';
+        }
         
         score++; 
         updateScoreDisplay();
 
-        setTimeout(() => {
-            if (img && img.classList.contains('revealed')) {
-                startNewGame(false); 
-            }
-        }, 1500);
-
+        setTimeout(() => startNewGame(false), 1500);
     } else {
         resultDiv.innerText = data.message || t.guess_wrong;
         resultDiv.style.color = "red";
     }
 }
 
-// --- INITIALIZATION & EVENT BINDING ---
+// --- INITIALIZATION ---
 
 document.addEventListener('DOMContentLoaded', () => {
     const guessBtn = document.getElementById('guessBtn');
@@ -225,10 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const pokemonInput = document.getElementById('pokemonInput');
 
     if (guessBtn) guessBtn.onclick = sendGuess;
-    
-    if (nextBtn) {
-        nextBtn.onclick = () => startNewGame(true);
-    }
+    if (nextBtn) nextBtn.onclick = () => startNewGame(true);
 
     if (pokemonInput) {
         pokemonInput.addEventListener('keypress', (e) => {
@@ -248,9 +259,6 @@ async function testConnection() {
         statusBox.classList.add('success');
     }
 }
-
-window.sendGuess = sendGuess;
-window.startNewGame = startNewGame;
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
