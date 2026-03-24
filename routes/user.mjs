@@ -11,7 +11,9 @@ const pool = new Pool({
     }
 });
 
-
+/**
+ Initialiserer databasen. 
+ */
 async function initDb() {
     try {
         await pool.query(`
@@ -23,18 +25,30 @@ async function initDb() {
                 score INTEGER DEFAULT 0
             );
         `);
-        console.log("Database initialisert: Tabellen 'users' er klar.");
+
+        await pool.query(`
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                               WHERE table_name='users' AND column_name='consented') THEN
+                    ALTER TABLE users ADD COLUMN consented BOOLEAN NOT NULL DEFAULT TRUE;
+                END IF;
+            END $$;
+        `);
+
+        console.log("Database initialisert: Tabellen users er klar.");
     } catch (err) {
         console.error("Kritisk feil ved initialisering av database:", err.message);
     }
 }
 initDb();
 
-
+/**
+ REGISTRERING
+ */
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     
-    // Logg innkommende data for debugging i Render
     console.log("Registeringsforsok mottatt for:", username);
 
     if (!username || !password) {
@@ -73,7 +87,9 @@ router.post('/register', async (req, res) => {
     }
 });
 
-
+/**
+ INNLOGGING
+ */
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
@@ -108,7 +124,9 @@ router.post('/login', async (req, res) => {
     }
 });
 
-
+/**
+ SLETTING
+ */
 router.delete('/delete', async (req, res) => {
     const { username, password } = req.body;
 
