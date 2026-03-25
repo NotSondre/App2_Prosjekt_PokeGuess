@@ -7,31 +7,41 @@
     <title>App2 - PokéGuess</title>
     <link rel="manifest" href="manifest.json">
     <style>
-       body { 
-    font-family: system-ui, sans-serif; 
-    text-align: center; 
-    padding: 20px; 
-    background-color: #f4f4f4;
-    background-image: url('Images/PokeGuess-Background.jpg');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    color: #000; 
-    margin: 0; 
-}
-        
-        .login-trigger {
-            position: absolute; top: 20px; right: 20px;
-            padding: 10px 20px; background: #000; color: #fff;
-            border: none; border-radius: 5px; cursor: pointer; font-weight: bold; z-index: 100;
+        body { 
+            font-family: system-ui, sans-serif; 
+            text-align: center; 
+            padding: 20px;
+            padding-top: 80px;
+            background-color: #f4f4f4;
+            background-image: url('Images/PokeGuess-Background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #000; 
+            margin: 0; 
         }
 
-        user-manager { display: none; position: absolute; top: 70px; right: 20px; z-index: 99; }
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 60px; background: #b2d0ec; color: #fff;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 100;
+        }
+
+        .header h2 { margin: 0; font-size: 1.2rem; }
+
+        .login-trigger {
+            padding: 8px 18px; background: #fff; color: #000;
+            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
+        }
+
+        .login-trigger:hover { background: #ddd; }
+
+        user-manager { display: none; position: fixed; top: 70px; right: 20px; z-index: 99; }
         user-manager.active { display: block; }
         
         .score-board { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #000; }
 
-        /* Styling for regions-velgeren */
         .region-container { margin-bottom: 15px; }
         #regionSelect { 
             width: 100%; 
@@ -75,12 +85,14 @@
         button { cursor: pointer; background: #000; color: #fff; font-weight: bold; }
         button:hover { background: #333; }
         #nextBtn { background: #eee; color: #000; margin-left: 5px; }
-
     </style>
 </head>
 <body>
 
-    <button class="login-trigger" id="toggleLogin" aria-label="Åpne brukermeny">Konto</button>
+    <header class="header">
+        <h2>PokéGuess</h2>
+        <button class="login-trigger" id="toggleLogin" aria-label="Åpne brukermeny">Konto</button>
+    </header>
 
     <main>
         <h1>PokéGuess</h1>
@@ -120,7 +132,6 @@
 
     <template id="user-manager-template">
         <style>
-
             .user-box { 
                 border: 2px solid #000; padding: 20px; width: 280px; 
                 border-radius: 8px; text-align: left; background: #fff;
