@@ -3,18 +3,28 @@ let mode = 'login';
 
 function switchTab(newMode) {
     mode = newMode;
-    document.getElementById('loginTab').classList.toggle('active', mode === 'login');
-    document.getElementById('registerTab').classList.toggle('active', mode === 'register');
-    document.getElementById('registerOnly').style.display = mode === 'register' ? 'block' : 'none';
-    document.getElementById('submitBtn').innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
-    document.getElementById('errorMessage').innerText = '';
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const registerOnly = document.getElementById('registerOnly');
+    const submitBtn = document.getElementById('submitBtn');
+    const errorMsg = document.getElementById('errorMessage');
+
+    if (loginTab) loginTab.classList.toggle('active', mode === 'login');
+    if (registerTab) registerTab.classList.toggle('active', mode === 'register');
+    if (registerOnly) registerOnly.style.display = mode === 'register' ? 'block' : 'none';
+    if (submitBtn) submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
+    
+    errorMsg.innerText = '';
 }
 
 async function handleAuth() {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const consent = document.getElementById('consent').checked;
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const consentInput = document.getElementById('consent');
     const errorMsg = document.getElementById('errorMessage');
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
 
     if (!username || !password) {
         errorMsg.innerText = "Fyll inn alle felt!";
@@ -25,7 +35,7 @@ async function handleAuth() {
     const body = { username, password };
     
     if (mode === 'register') {
-        if (!consent) {
+        if (!consentInput.checked) {
             errorMsg.innerText = "Du må godta lagring av data.";
             return;
         }
@@ -44,7 +54,7 @@ async function handleAuth() {
         if (response.ok) {
             if (mode === 'login') {
                 localStorage.setItem('pokemon_user', data.user.name);
-                window.location.href = 'index.html';
+                window.location.href = 'profile.html'; 
             } else {
                 alert("Bruker opprettet! Du kan nå logge inn.");
                 switchTab('login');
@@ -54,5 +64,16 @@ async function handleAuth() {
         }
     } catch (err) {
         errorMsg.innerText = "Kunne ikke koble til serveren.";
+        console.error(err);
     }
 }
+
+window.switchTab = switchTab;
+window.handleAuth = handleAuth;
+
+document.addEventListener('DOMContentLoaded', () => {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', handleAuth);
+    }
+});
