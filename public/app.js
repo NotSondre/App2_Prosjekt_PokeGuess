@@ -35,7 +35,7 @@ const t = translations[userLang];
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
-let activeRegion = 'all';
+let activeRegion = 'all'; 
 
 function updateHeaderButton() {
     const authBtn = document.getElementById('authBtn'); 
@@ -122,7 +122,9 @@ async function startNewGame(isSkip = false) {
         currentPokemonName = data.name || data.pokemon;
         if (img) {
             img.src = data.imageUrl || data.image || data.url;
-            img.onload = () => { img.style.display = 'block'; };
+            img.onload = () => { 
+                img.style.display = 'block'; 
+            };
         }
     }
 }
@@ -142,7 +144,10 @@ async function sendGuess() {
     if (data.success) {
         resultDiv.innerText = `${t.guess_correct}${currentPokemonName}!`; 
         resultDiv.style.color = "green";
-        if (img) img.classList.add('revealed');
+        if (img) {
+            img.classList.add('revealed');
+            img.style.display = 'block';
+        }
         score++; 
         updateScoreDisplay();
         saveScore(); 
@@ -158,17 +163,13 @@ async function sendGuess() {
 document.addEventListener('DOMContentLoaded', () => {
     updateHeaderButton(); 
 
-    // NYTT: Finn alle knapper med klassen "region-btn"
     const regionButtons = document.querySelectorAll('.region-btn');
     
     regionButtons.forEach(btn => {
         btn.onclick = () => {
-            // 1. Fjern "active" farge fra alle knapper
             regionButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
             activeRegion = btn.getAttribute('data-region');
-            
             startNewGame(false);
         };
     });
@@ -189,13 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
     startNewGame();
 });
 
-
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registrert'))
-        .catch(err => console.error('SW feilet', err));
 }
