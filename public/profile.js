@@ -1,5 +1,6 @@
 const API_BASE = 'https://poke-guessr.onrender.com';
-const username = localStorage.getItem('pokemon_user');
+let username = localStorage.getItem('pokemon_user');
+let selectedImageUrl = null;
 
 async function loadProfile() {
     if (!username) {
@@ -12,7 +13,7 @@ async function loadProfile() {
         const data = await response.json();
 
         if (data.error) {
-            alert("Kunne ikke laste profil");
+            alert("Feil ved henting av profil");
             return;
         }
 
@@ -28,26 +29,55 @@ async function loadProfile() {
                 </div>
             `).join('');
         } else {
-            container.innerHTML = "<p>Ingen poengsummer lagret ennå.</p>";
+            container.innerHTML = "<p>Ingen lagrede poengsummer.</p>";
         }
-
     } catch (err) {
-        console.error("Feil:", err);
+        console.error("Profilfeil:", err);
     }
 }
-
-// --- NYE FUNKSJONER FOR REDIGERING ---
 
 function toggleEdit() {
     const panel = document.getElementById('editPanel');
     panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
 }
 
+async function searchPokemon() {
+    const input = document.getElementById('pokemonSearchInput').value.trim().toLowerCase();
+    const status = document.getElementById('searchStatus');
+    const preview = document.getElementById('previewPic');
+    const nameLabel = document.getElementById('previewName');
+
+    if (!input) return;
+
+    status.innerText = "Søker...";
+    preview.style.display = "none";
+    nameLabel.innerText = "";
+
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
+        if (!response.ok) throw new Error();
+        
+        const data = await response.json();
+        
+        selectedImageUrl = data.sprites.front_default;
+        
+        status.style.display = "none";
+        preview.src = selectedImageUrl;
+        preview.style.display = "block";
+        nameLabel.innerText = data.name;
+    } catch (err) {
+        status.innerText = "Fant ikke Pokémon. Prøv et annet navn.";
+        status.style.display = "block";
+        selectedImageUrl = null;
+    }
+}
+
+// Lagre endringer (Brukernavn og/eller bilde)
 async function saveProfileChanges() {
     const newName = document.getElementById('newNameInput').value.trim();
-    const newPic = document.getElementById('newPicInput').value.trim();
     const oldName = localStorage.getItem('pokemon_user');
 
+    // 1. Endre navn hvis utfylt
     if (newName && newName !== oldName) {
         try {
             const res = await fetch(`${API_BASE}/user/update-username`, {
@@ -56,52 +86,39 @@ async function saveProfileChanges() {
                 body: JSON.stringify({ oldName, newName })
             });
             const data = await res.json();
-            
             if (data.message) {
                 localStorage.setItem('pokemon_user', newName);
-                window.location.reload(); 
-                return; 
+                username = newName;
             } else {
-                alert(data.error || "Kunne ikke endre navn");
+                alert(data.error);
                 return;
             }
-        } catch (err) {
-            console.error("Navnebytte feilet:", err);
-        }
+        } catch (err) { console.error(err); }
     }
 
-    if (newPic) {
+    if (selectedImageUrl) {
         try {
-            const res = await fetch(`${API_BASE}/user/update-pic`, {
+            await fetch(`${API_BASE}/user/update-pic`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: oldName, imageUrl: newPic })
+                body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), imageUrl: selectedImageUrl })
             });
-            const data = await res.json();
-            if (!data.message) {
-                alert(data.error || "Kunne ikke endre bilde");
-            }
-        } catch (err) {
-            console.error("Bildeoppdatering feilet:", err);
-        }
+        } catch (err) { console.error(err); }
     }
+
     location.reload();
 }
 
+// Slett spesifikk score
 async function deleteScore(scoreId) {
-    if (!confirm("Vil du slette denne poengsummen permanent?")) return;
+    if (!confirm("Vil du slette denne rekorden?")) return;
 
     try {
         const response = await fetch(`${API_BASE}/user/score/${scoreId}?username=${username}`, {
             method: 'DELETE'
         });
-
         const result = await response.json();
-        if (result.message) {
-            loadProfile();
-        } else {
-            alert(result.error || "Kunne ikke slette");
-        }
+        if (result.message) loadProfile();
     } catch (err) {
         console.error("Sletting feilet:", err);
     }
