@@ -114,7 +114,7 @@
 <body>
 
 <div class="profile-card">
-    <img id="displayPic" class="profile-pic" src="" alt="Profilbilde">
+    <img id="displayPic" class="profile-pic" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" alt="Profilbilde">
     <h2 id="displayUsername">Laster...</h2>
     
     <button onclick="toggleEdit()" class="btn btn-edit">Rediger Profil</button>
@@ -122,11 +122,9 @@
     <div id="editPanel">
         <label>Endre Brukernavn:</label>
         <input type="text" id="newNameInput" class="edit-input" placeholder="Nytt navn...">
-
         <hr>
-
-        <label>Søk etter nytt bilde (Navn eller ID):</label>
-        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. charmander">
+        <label>Søk etter nytt bilde:</label>
+        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. pikachu">
         <button onclick="searchPokemon()" class="btn btn-search">Finn Pokémon</button>
 
         <div id="searchPreview">
@@ -134,13 +132,10 @@
             <img id="previewPic" src="" style="display:none; width: 96px; height: 96px; image-rendering: pixelated;">
             <p id="previewName" style="font-weight: bold; text-transform: capitalize; margin: 5px 0 0 0;"></p>
         </div>
-
         <hr>
-
-        <label>Endre Passord (valgfritt):</label>
+        <label>Endre Passord:</label>
         <input type="password" id="oldPasswordInput" class="edit-input" placeholder="Gammelt passord">
         <input type="password" id="newPasswordInput" class="edit-input" placeholder="Nytt passord">
-
         <button onclick="saveProfileChanges()" class="btn btn-save">Lagre alt</button>
     </div>
 
@@ -157,9 +152,10 @@
 
 <div class="delete-account-card">
     <h3 class="danger-title">Faresone</h3>
-    <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Skriv passordet ditt for å slette kontoen permanent.</p>
-    <input type="password" id="deleteConfirmPassword" class="edit-input" placeholder="Bekreft med passord...">
+    <input type="password" id="deleteConfirmPassword" class="edit-input" placeholder="Passord for å slette...">
     <button onclick="deleteAccount()" class="btn btn-danger">Slett konto</button>
 </div>
 
-<script src="profile.js"></script
+<script src="profile.js"></script>
+</body>
+</html>
