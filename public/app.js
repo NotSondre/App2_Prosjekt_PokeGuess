@@ -36,6 +36,7 @@ const API_BASE = 'https://poke-guessr.onrender.com';
 let score = 0; 
 let currentPokemonName = ""; 
 let activeRegion = 'all'; 
+let isProcessing = false; // Sperre for å hindre doble kall
 
 function updateHeaderButton() {
     const authBtn = document.getElementById('authBtn'); 
@@ -77,8 +78,19 @@ async function request(endpoint, method = 'GET', data = null) {
 
 async function saveScore() {
     const username = localStorage.getItem('pokemon_user');
+    
     if (!username || score <= 0) return;
-    await request('/user/score', 'POST', { username, score });
+
+    const finalScore = score; 
+    score = 0;              
+    updateScoreDisplay();    
+
+    console.log("Sender endelig poengsum til server:", finalScore);
+
+    await request('/user/score', 'POST', { 
+        username: username, 
+        score: finalScore 
+    });
 }
 
 // --- GAME LOGIC ---
@@ -89,14 +101,15 @@ function updateScoreDisplay() {
 }
 
 async function startNewGame(isSkip = false) {
+    if (isProcessing) return;
+
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
     if (isSkip && img && !img.classList.contains('revealed')) {
+        isProcessing = true;
         await saveScore();
-        score = 0; 
-        updateScoreDisplay();
         
         img.classList.add('revealed'); 
         img.style.display = 'block';
@@ -104,7 +117,11 @@ async function startNewGame(isSkip = false) {
             resultDiv.innerText = `${t.it_was}${currentPokemonName}!`;
             resultDiv.style.color = "orange";
         }
-        setTimeout(() => startNewGame(false), 2000);
+        
+        setTimeout(() => {
+            isProcessing = false;
+            startNewGame(false);
+        }, 2000);
         return;
     }
 
@@ -116,7 +133,9 @@ async function startNewGame(isSkip = false) {
         img.src = "";
     }
 
+    isProcessing = true;
     const data = await request(`/content/pokemon?region=${activeRegion}&t=${Date.now()}`);
+    isProcessing = false;
     
     if (data && !data.error) {
         currentPokemonName = data.name || data.pokemon;
@@ -130,12 +149,15 @@ async function startNewGame(isSkip = false) {
 }
 
 async function sendGuess() {
+    if (isProcessing) return;
+
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
     const img = document.getElementById('pokemonImage');
 
     if (!input || !input.value.trim() || (img && img.classList.contains('revealed'))) return;
 
+    isProcessing = true;
     const data = await request('/content/guess', 'POST', { 
         guess: input.value.trim(),
         correctAnswer: currentPokemonName
@@ -150,9 +172,13 @@ async function sendGuess() {
         }
         score++; 
         updateScoreDisplay();
-        saveScore(); 
-        setTimeout(() => startNewGame(false), 1500);
+        
+        setTimeout(() => {
+            isProcessing = false;
+            startNewGame(false);
+        }, 1500);
     } else {
+        isProcessing = false;
         resultDiv.innerText = t.guess_wrong;
         resultDiv.style.color = "red";
     }
@@ -167,6 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     regionButtons.forEach(btn => {
         btn.onclick = () => {
+            if (isProcessing) return;
             regionButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             activeRegion = btn.getAttribute('data-region');
