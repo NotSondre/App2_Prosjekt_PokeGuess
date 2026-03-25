@@ -36,6 +36,58 @@ async function loadProfile() {
     }
 }
 
+// --- NYE FUNKSJONER FOR REDIGERING ---
+
+function toggleEdit() {
+    const panel = document.getElementById('editPanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+}
+
+async function saveProfileChanges() {
+    const newName = document.getElementById('newNameInput').value.trim();
+    const newPic = document.getElementById('newPicInput').value.trim();
+    const oldName = localStorage.getItem('pokemon_user');
+
+    if (newName && newName !== oldName) {
+        try {
+            const res = await fetch(`${API_BASE}/user/update-username`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ oldName, newName })
+            });
+            const data = await res.json();
+            
+            if (data.message) {
+                localStorage.setItem('pokemon_user', newName);
+                window.location.reload(); 
+                return; 
+            } else {
+                alert(data.error || "Kunne ikke endre navn");
+                return;
+            }
+        } catch (err) {
+            console.error("Navnebytte feilet:", err);
+        }
+    }
+
+    if (newPic) {
+        try {
+            const res = await fetch(`${API_BASE}/user/update-pic`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: oldName, imageUrl: newPic })
+            });
+            const data = await res.json();
+            if (!data.message) {
+                alert(data.error || "Kunne ikke endre bilde");
+            }
+        } catch (err) {
+            console.error("Bildeoppdatering feilet:", err);
+        }
+    }
+    location.reload();
+}
+
 async function deleteScore(scoreId) {
     if (!confirm("Vil du slette denne poengsummen permanent?")) return;
 
