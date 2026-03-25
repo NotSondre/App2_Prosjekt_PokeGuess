@@ -36,26 +36,40 @@ async function loadProfile() {
     }
 }
 
-// Resten av funksjonene
 async function searchPokemon() {
     const input = document.getElementById('pokemonSearchInput').value.trim().toLowerCase();
     const panel = document.getElementById('searchPreview');
+    const successMsg = document.getElementById('searchSuccess');
+    const nameSpan = document.getElementById('chosenPokemonName'); // Nytt felt for navnet
+    const status = document.getElementById('searchStatus');
+    const preview = document.getElementById('previewPic');
+
     if (!input) return;
     
     panel.style.display = "flex";
-    document.getElementById('searchStatus').innerText = "Søker...";
-    document.getElementById('previewPic').style.display = "none";
+    status.style.display = "block";
+    status.innerText = "Søker...";
+    preview.style.display = "none";
+    successMsg.style.display = "none";
 
     try {
         const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
+        if (!res.ok) throw new Error();
+        
         const data = await res.json();
         selectedImageUrl = data.sprites.front_default;
-        document.getElementById('searchStatus').style.display = "none";
-        document.getElementById('previewPic').src = selectedImageUrl;
-        document.getElementById('previewPic').style.display = "block";
-        document.getElementById('previewName').innerText = data.name;
+        
+        status.style.display = "none";
+        preview.src = selectedImageUrl;
+        preview.style.display = "block";
+        
+        nameSpan.innerText = data.name; 
+        successMsg.style.display = "block"; 
+        
     } catch (e) {
-        document.getElementById('searchStatus').innerText = "Fant ikke Pokémon.";
+        status.innerText = "Fant ikke Pokémon. Prøv igjen.";
+        successMsg.style.display = "none";
+        preview.style.display = "none";
     }
 }
 

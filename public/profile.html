@@ -123,20 +123,22 @@
         <label>Endre Brukernavn:</label>
         <input type="text" id="newNameInput" class="edit-input" placeholder="Nytt navn...">
         <hr>
-        <label>Søk etter pokemon for nytt bilde:</label>
-        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. Bulbasaur">
-        <button onclick="searchPokemon()" class="btn btn-search">Finn Pokémon</button>
-
-        <div id="searchPreview">
-            <p id="searchStatus" style="color: #999;">Søker...</p>
-            <img id="previewPic" src="" style="display:none; width: 96px; height: 96px; image-rendering: pixelated;">
-            <p id="previewName + er valgt" style="font-weight: bold; text-transform: capitalize; margin: 5px 0 0 0;"></p>
-        </div>
-        <hr>
-        <label>Endre Passord:</label>
+<label>Endre Passord:</label>
         <input type="password" id="oldPasswordInput" class="edit-input" placeholder="Gammelt passord">
         <input type="password" id="newPasswordInput" class="edit-input" placeholder="Nytt passord">
         <button onclick="saveProfileChanges()" class="btn btn-save">Lagre alt</button>
+        <hr>
+        <label>Søk etter en pokemon for nytt bilde:</label>
+        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. Bulbasaur">
+        <button onclick="searchPokemon()" class="btn btn-search">Finn Pokémon</button>
+    <div id="searchPreview">
+    <p id="searchStatus" style="color: #999;">Søker...</p>
+    <img id="previewPic" src="" style="display:none; width: 96px; height: 96px; image-rendering: pixelated;">
+    <p id="searchSuccess" style="display:none; color: #4CAF50; font-weight: bold; font-size: 0.9rem; margin-top: 5px;">
+        ✓ <span id="chosenPokemonName" style="text-transform: capitalize;"></span> er valgt!
+    </p>
+    <p style="font-size: 0.75rem; color: #888; margin: 0;">(Husk å trykke "Lagre alt" nederst)</p>
+</div>
     </div>
 
     <div class="score-list" style="text-align: left; margin-top: 20px;">
