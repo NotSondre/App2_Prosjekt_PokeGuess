@@ -14,18 +14,20 @@ router.get('/pokemon', async (req, res) => {
         let min = 1;
         let max = 1025;
 
-        if (region === 'gen1') { min = 1; max = 151; }
-        else if (region === 'gen2') { min = 152; max = 251; }
-        else if (region === 'gen3') { min = 252; max = 386; }
-        else if (region === 'gen4') { min = 387; max = 493; }
-        else if (region === 'gen5') { min = 494; max = 649; }
-        else if (region === 'gen6') { min = 650; max = 721; }
-        else if (region === 'gen7') { min = 722; max = 809; }
-        else if (region === 'gen8') { min = 810; max = 905; }
-        else if (region === 'gen9') { min = 906; max = 1025; }
+        // Oppdatert for å matche data-region fra index.html
+        if (region === 'kanto') { min = 1; max = 151; }
+        else if (region === 'johto') { min = 152; max = 251; }
+        else if (region === 'hoenn') { min = 252; max = 386; }
+        else if (region === 'sinnoh') { min = 387; max = 493; }
+        else if (region === 'unova') { min = 494; max = 649; }
+        else if (region === 'kalos') { min = 650; max = 721; }
+        else if (region === 'alola') { min = 722; max = 809; }
+        else if (region === 'galar') { min = 810; max = 905; }
+        else if (region === 'paldea') { min = 906; max = 1025; }
 
         let randomId;
         let attempts = 0;
+        
         do {
             randomId = Math.floor(Math.random() * (max - min + 1)) + min;
             attempts++;
@@ -39,7 +41,7 @@ router.get('/pokemon', async (req, res) => {
         
         currentAnswer = data.name.replace(/-/g, ' ').toLowerCase().trim(); 
         
-        console.log(`Ny Pokémon: ${currentAnswer} (ID: ${randomId})`);
+        console.log(`Region valgt: ${region || 'alle'} | Ny Pokémon: ${currentAnswer} (ID: ${randomId})`);
 
         res.json({ 
             imageUrl: data.sprites.other['official-artwork'].front_default,
@@ -47,17 +49,16 @@ router.get('/pokemon', async (req, res) => {
             name: currentAnswer 
         });
     } catch (err) {
+        console.error("Feil ved henting av Pokémon:", err.message);
         res.status(500).json({ error: "Kunne ikke hente Pokémon" });
     }
 });
 
 router.post('/guess', cleanGuess, (req, res) => {
     const { guess } = req.body;
-
     if (!guess) return res.status(400).json({ error: "Mangler gjetting" });
 
     const shortAnswer = currentAnswer.split(' ')[0];
-
     const isCorrect = guess === currentAnswer || guess === shortAnswer;
 
     if (isCorrect) {
