@@ -13,7 +13,7 @@ async function loadProfile() {
         const data = await response.json();
 
         if (data.error) {
-            alert("Feil ved henting av profil");
+            console.error("Kunne ikke laste profil");
             return;
         }
 
@@ -25,20 +25,19 @@ async function loadProfile() {
             container.innerHTML = data.topScores.map(s => `
                 <div class="score-item">
                     <span><strong>${s.score}</strong> poeng (${new Date(s.played_at).toLocaleDateString()})</span>
-                    <button class="delete-score-btn" onclick="deleteScore(${s.id})">Slett</button>
+                    <button class="delete-score-btn" data-id="${s.id}">Slett</button>
                 </div>
             `).join('');
+
+            document.querySelectorAll('.delete-score-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => deleteScore(e.target.dataset.id));
+            });
         } else {
-            container.innerHTML = "<p>Ingen lagrede poengsummer.</p>";
+            container.innerHTML = "<p>Ingen lagrede poengsummer ennå.</p>";
         }
     } catch (err) {
         console.error("Profilfeil:", err);
     }
-}
-
-function toggleEdit() {
-    const panel = document.getElementById('editPanel');
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
 }
 
 async function searchPokemon() {
@@ -66,18 +65,16 @@ async function searchPokemon() {
         preview.style.display = "block";
         nameLabel.innerText = data.name;
     } catch (err) {
-        status.innerText = "Fant ikke Pokémon. Prøv et annet navn.";
+        status.innerText = "Fant ikke Pokémon. Prøv navn eller ID.";
         status.style.display = "block";
         selectedImageUrl = null;
     }
 }
 
-// Lagre endringer (Brukernavn og/eller bilde)
 async function saveProfileChanges() {
     const newName = document.getElementById('newNameInput').value.trim();
     const oldName = localStorage.getItem('pokemon_user');
 
-    // 1. Endre navn hvis utfylt
     if (newName && newName !== oldName) {
         try {
             const res = await fetch(`${API_BASE}/user/update-username`, {
@@ -88,12 +85,14 @@ async function saveProfileChanges() {
             const data = await res.json();
             if (data.message) {
                 localStorage.setItem('pokemon_user', newName);
-                username = newName;
+                username = newName; // Oppdaterer lokal variabel
             } else {
                 alert(data.error);
                 return;
             }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("Navnebytte feilet:", err);
+        }
     }
 
     if (selectedImageUrl) {
@@ -103,13 +102,14 @@ async function saveProfileChanges() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), imageUrl: selectedImageUrl })
             });
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error("Bildeoppdatering feilet:", err);
+        }
     }
 
     location.reload();
 }
 
-// Slett spesifikk score
 async function deleteScore(scoreId) {
     if (!confirm("Vil du slette denne rekorden?")) return;
 
@@ -118,15 +118,27 @@ async function deleteScore(scoreId) {
             method: 'DELETE'
         });
         const result = await response.json();
-        if (result.message) loadProfile();
+        if (result.message) {
+            loadProfile();
+        }
     } catch (err) {
         console.error("Sletting feilet:", err);
     }
+}
+
+function toggleEdit() {
+    const panel = document.getElementById('editPanel');
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
 }
 
 function logout() {
     localStorage.removeItem('pokemon_user');
     window.location.href = 'login.html';
 }
+
+window.toggleEdit = toggleEdit;
+window.searchPokemon = searchPokemon;
+window.saveProfileChanges = saveProfileChanges;
+window.logout = logout;
 
 document.addEventListener('DOMContentLoaded', loadProfile);

@@ -35,8 +35,9 @@
             border-radius: 50%;
             border: 4px solid #ffcb05;
             margin-bottom: 15px;
-            object-fit: cover;
+            object-fit: contain;
             background: #f0f0f0;
+            image-rendering: pixelated;
         }
 
         h2 { margin: 10px 0; color: #333; }
@@ -45,18 +46,32 @@
         #editPanel {
             display: none;
             margin: 15px 0;
-            padding: 15px;
+            padding: 20px;
             background: #fdfdfd;
             border: 2px dashed #ffcb05;
             border-radius: 12px;
+            text-align: left;
         }
 
         .edit-input {
-            width: 90%;
+            width: 100%;
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        #searchPreview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            min-height: 120px;
+            border: 1px solid #eee;
         }
 
         .score-list {
@@ -85,8 +100,6 @@
             font-size: 0.8rem;
         }
 
-        .delete-score-btn:hover { background: #cc0000; }
-
         .nav-btns {
             margin-top: 20px;
             display: flex;
@@ -107,8 +120,9 @@
 
         .btn-edit { background: #ffcb05; color: #333; }
         .btn-back { background: #2196F3; }
-        .btn-logout { background: #ff4444; }
-        .btn-save { background: #4CAF50; margin-top: 5px; width: 100%; }
+        .btn-logout { background: #666; }
+        .btn-save { background: #4CAF50; width: 100%; margin-top: 10px; }
+        .btn-search { background: #333; margin-bottom: 10px; width: 100%; }
     </style>
 </head>
 <body>
@@ -120,14 +134,25 @@
     <button onclick="toggleEdit()" class="btn btn-edit">Rediger Profil</button>
 
     <div id="editPanel">
-        <input type="text" id="newNameInput" class="edit-input" placeholder="Nytt brukernavn">
-        <input type="text" id="newPicInput" class="edit-input" placeholder="Bilde URL (f.eks. fra PokéAPI)">
-        <button onclick="saveProfileChanges()" class="btn btn-save">Lagre endringer</button>
+        <label>Endre Brukernavn:</label>
+        <input type="text" id="newNameInput" class="edit-input" placeholder="Nytt navn...">
+        
+        <label>Søk etter nytt bilde (Navn eller ID):</label>
+        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. charmander eller 4">
+        <button onclick="searchPokemon()" class="btn btn-search">Finn Pokémon</button>
+
+        <div id="searchPreview">
+            <p id="searchStatus" style="color: #999;">Ingen Pokémon valgt</p>
+            <img id="previewPic" src="" style="display:none; width: 96px; height: 96px; image-rendering: pixelated;">
+            <p id="previewName" style="font-weight: bold; text-transform: capitalize; margin: 5px 0 0 0;"></p>
+        </div>
+
+        <button onclick="saveProfileChanges()" class="btn btn-save">Lagre alt</button>
     </div>
 
     <div class="score-list">
-        <h3>Dine Highscores</h3>
-        <div id="scoreContainer">Laster poengsummer...</div>
+        <h3>Topp 5 Poengsummer</h3>
+        <div id="scoreContainer">Henter poeng...</div>
     </div>
 
     <div class="nav-btns">
