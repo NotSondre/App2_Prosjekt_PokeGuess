@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logg inn - PokéGuess</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2a75bb url('Images/PokeGuess-Background.jpg') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .auth-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            border: 3px solid #000;
+            text-align: center;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .tab.active {
+            color: #2a75bb;
+            border-bottom: 3px solid #ffcb05;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+
+        input:focus { border-color: #2a75bb; outline: none; }
+
+        .btn-auth {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .btn-auth:hover { opacity: 0.9; }
+
+        #errorMessage {
+            color: #ff4444;
+            font-weight: bold;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
+        .consent-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        .consent-box input { width: auto; }
+    </style>
+</head>
+<body>
+
+<div class="auth-container">
+    <img src="Images/Poke-Guessr_Logo.png" alt="Logo" style="height: 50px; margin-bottom: 20px;">
+    
+    <div class="tabs">
+        <div id="loginTab" class="tab active" onclick="switchTab('login')">Logg inn</div>
+        <div id="registerTab" class="tab" onclick="switchTab('register')">Registrer</div>
+    </div>
+
+    <div id="authForm">
+        <div class="form-group">
+            <label for="username">Brukernavn</label>
+            <input type="text" id="username" placeholder="Ditt trenersnavn...">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Passord</label>
+            <input type="password" id="password" placeholder="******">
+        </div>
+
+        <div id="registerOnly" style="display: none;">
+            <div class="consent-box">
+                <input type="checkbox" id="consent">
+                <label for="consent">Jeg godtar at mine poengsummer lagres.</label>
+            </div>
+        </div>
+
+        <div id="errorMessage"></div>
+        
+        <button id="submitBtn" class="btn-auth" onclick="handleAuth()">Logg inn</button>
+    </div>
+
+    <p style="margin-top: 20px;"><a href="index.html" style="color: #666; text-decoration: none; font-size: 0.9rem;">← Tilbake til spillet</a></p>
+</div>
+
+<script src="login.js"></script
