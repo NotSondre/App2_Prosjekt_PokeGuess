@@ -12,11 +12,6 @@ async function loadProfile() {
         const response = await fetch(`${API_BASE}/user/profile?username=${username}`);
         const data = await response.json();
 
-        if (data.error) {
-            console.error("Kunne ikke laste profil");
-            return;
-        }
-
         document.getElementById('displayUsername').innerText = username;
         document.getElementById('displayPic').src = data.profilePic || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
 
@@ -24,20 +19,14 @@ async function loadProfile() {
         if (data.topScores && data.topScores.length > 0) {
             container.innerHTML = data.topScores.map(s => `
                 <div class="score-item">
-                    <span><strong>${s.score}</strong> poeng (${new Date(s.played_at).toLocaleDateString()})</span>
-                    <button class="delete-score-btn" data-id="${s.id}">Slett</button>
+                    <span><strong>${s.score}</strong> (${new Date(s.played_at).toLocaleDateString()})</span>
+                    <button class="btn" style="background:#ff4444; padding:2px 8px;" onclick="deleteScore(${s.id})">X</button>
                 </div>
             `).join('');
-
-            document.querySelectorAll('.delete-score-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => deleteScore(e.target.dataset.id));
-            });
         } else {
-            container.innerHTML = "<p>Ingen lagrede poengsummer ennå.</p>";
+            container.innerHTML = "<p>Ingen scores ennå.</p>";
         }
-    } catch (err) {
-        console.error("Profilfeil:", err);
-    }
+    } catch (err) { console.error("Lasting feilet:", err); }
 }
 
 async function searchPokemon() {
@@ -45,109 +34,88 @@ async function searchPokemon() {
     const status = document.getElementById('searchStatus');
     const preview = document.getElementById('previewPic');
     const nameLabel = document.getElementById('previewName');
-    const previewPanel = document.getElementById('searchPreview'); 
+    const panel = document.getElementById('searchPreview');
 
     if (!input) return;
-
-    previewPanel.style.display = "flex";
+    panel.style.display = "flex";
     status.innerText = "Søker...";
-    status.style.display = "block";
     preview.style.display = "none";
-    nameLabel.innerText = "";
 
     try {
-        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
-        if (!response.ok) throw new Error();
-        
-        const data = await response.json();
-        
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
+        const data = await res.json();
         selectedImageUrl = data.sprites.front_default;
-        
         status.style.display = "none";
         preview.src = selectedImageUrl;
         preview.style.display = "block";
         nameLabel.innerText = data.name;
     } catch (err) {
-        status.innerText = "Fant ikke Pokémon. Prøv navn eller ID.";
-        status.style.display = "block";
-        preview.style.display = "none";
+        status.innerText = "Fant ikke Pokémon.";
         selectedImageUrl = null;
     }
 }
 
 async function saveProfileChanges() {
     const newName = document.getElementById('newNameInput').value.trim();
-    const oldPassword = document.getElementById('oldPasswordInput').value;
-    const newPassword = document.getElementById('newPasswordInput').value;
+    const oldPass = document.getElementById('oldPasswordInput').value;
+    const newPass = document.getElementById('newPasswordInput').value;
     const oldName = localStorage.getItem('pokemon_user');
 
-    // 1. Navnebytte
+    // 1. Navn
     if (newName && newName !== oldName) {
-        try {
-            const res = await fetch(`${API_BASE}/user/update-username`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ oldName, newName })
-            });
-            const data = await res.json();
-            if (data.message) {
-                localStorage.setItem('pokemon_user', newName);
-                username = newName;
-            } else {
-                alert(data.error);
-                return;
-            }
-        } catch (err) { console.error("Navnebytte feilet:", err); }
+        const res = await fetch(`${API_BASE}/user/update-username`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ oldName, newName })
+        });
+        if ((await res.json()).message) localStorage.setItem('pokemon_user', newName);
     }
 
-    // 2. Bildeoppdatering
+    // 2. Bilde
     if (selectedImageUrl) {
-        try {
-            await fetch(`${API_BASE}/user/update-pic`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), imageUrl: selectedImageUrl })
-            });
-        } catch (err) { console.error("Bildeoppdatering feilet:", err); }
+        await fetch(`${API_BASE}/user/update-pic`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), imageUrl: selectedImageUrl })
+        });
     }
 
-    // 3. Passordbytte (Nå inne i funksjonen!)
-    if (oldPassword && newPassword) {
-        try {
-            const res = await fetch(`${API_BASE}/user/update-password`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    username: localStorage.getItem('pokemon_user'), 
-                    oldPassword, 
-                    newPassword 
-                })
-            });
-            const data = await res.json();
-            if (!data.message) {
-                alert("Passordfeil: " + data.error);
-                return;
-            }
-        } catch (err) { console.error("Passordbytte feilet:", err); }
+    // 3. Passord
+    if (oldPass && newPass) {
+        const res = await fetch(`${API_BASE}/user/update-password`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), oldPassword: oldPass, newPassword: newPass })
+        });
+        const data = await res.json();
+        if (!data.message) return alert("Passordfeil: " + data.error);
     }
 
     location.reload();
 }
 
-async function deleteScore(scoreId) {
-    if (!confirm("Vil du slette denne rekorden?")) return;
-    try {
-        const response = await fetch(`${API_BASE}/user/score/${scoreId}?username=${username}`, {
-            method: 'DELETE'
-        });
-        const result = await response.json();
-        if (result.message) loadProfile();
-    } catch (err) { console.error("Sletting feilet:", err); }
+async function deleteAccount() {
+    const password = document.getElementById('deleteConfirmPassword').value;
+    if (!password) return alert("Skriv passord!");
+    if (!confirm("Slette kontoen permanent?")) return;
+
+    const res = await fetch(`${API_BASE}/user/delete`, {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), password })
+    });
+
+    if (res.ok) {
+        localStorage.removeItem('pokemon_user');
+        window.location.href = 'login.html';
+    } else {
+        alert("Feil passord.");
+    }
 }
 
 function toggleEdit() {
-    const panel = document.getElementById('editPanel');
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    const p = document.getElementById('editPanel');
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
 }
 
 function logout() {
@@ -155,10 +123,9 @@ function logout() {
     window.location.href = 'login.html';
 }
 
-// Global eksponering for onclick
 window.toggleEdit = toggleEdit;
 window.searchPokemon = searchPokemon;
 window.saveProfileChanges = saveProfileChanges;
+window.deleteAccount = deleteAccount;
 window.logout = logout;
-
 document.addEventListener('DOMContentLoaded', loadProfile);
