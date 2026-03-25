@@ -35,11 +35,11 @@ const t = translations[userLang];
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
-let activeRegion = 'all'; // Holder styr på valgt region fra sidebaren
+let activeRegion = 'all'; 
 
-// Oppdaterer knappen i headeren basert på innloggingsstatus
+// Oppdaterer knappen i headeren
 function updateHeaderButton() {
-    const authBtn = document.getElementById('authBtn'); // Samsvarer med index.html
+    const authBtn = document.getElementById('authBtn'); 
     const username = localStorage.getItem('pokemon_user');
 
     if (username && authBtn) {
@@ -57,6 +57,7 @@ function updateHeaderButton() {
     }
 }
 
+// Universal fetch-funksjon
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
         method: method,
@@ -77,6 +78,7 @@ async function request(endpoint, method = 'GET', data = null) {
     }
 }
 
+// Lagrer poengsum til databasen
 async function saveScore() {
     const username = localStorage.getItem('pokemon_user');
     if (!username || score <= 0) return;
@@ -95,7 +97,7 @@ async function startNewGame(isSkip = false) {
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     
-    // Hvis brukeren trykker "Neste" uten å ha gjettet riktig
+    // Ved "Neste" (Skip)
     if (isSkip && img && !img.classList.contains('revealed')) {
         await saveScore();
         score = 0; 
@@ -103,33 +105,30 @@ async function startNewGame(isSkip = false) {
         
         img.classList.add('revealed'); 
         img.style.display = 'block';
-        const nameToShow = currentPokemonName || "denne Pokémonen";
         if (resultDiv) {
-            resultDiv.innerText = `${t.it_was}${nameToShow}!`;
+            resultDiv.innerText = `${t.it_was}${currentPokemonName}!`;
             resultDiv.style.color = "orange";
         }
-
         setTimeout(() => startNewGame(false), 2000);
         return;
     }
 
-    // Nullstill UI for ny runde
+    // Reset spillfeltet for ny runde
     if (input) { input.value = ""; input.focus(); }
     if (resultDiv) resultDiv.innerText = "";
     if (img) {
         img.classList.remove('revealed'); 
-        img.style.display = 'none'; 
+        img.style.display = 'none'; // Skjuler bildet til det er lastet
         img.src = "";
     }
 
-    // Hent ny Pokémon basert på aktiv region
+    // Henter ny Pokémon basert på valgt region fra sidebaren
     const data = await request(`/content/pokemon?region=${activeRegion}&t=${Date.now()}`);
     
     if (data && !data.error) {
-        const bildeUrl = data.imageUrl || data.image || data.url;
-        if (img && bildeUrl) {
-            img.src = bildeUrl;
-            currentPokemonName = data.name || data.pokemon || "Ukjent";
+        currentPokemonName = data.name || data.pokemon;
+        if (img) {
+            img.src = data.imageUrl || data.image || data.url;
             img.onload = () => { 
                 img.style.display = 'block'; 
             };
@@ -142,11 +141,11 @@ async function sendGuess() {
     const resultDiv = document.getElementById('guessResult');
     const img = document.getElementById('pokemonImage');
 
-    if (!input || !input.value || (img && img.classList.contains('revealed'))) return;
+    if (!input || !input.value.trim() || img.classList.contains('revealed')) return;
 
-    // Send gjetting til backend
+    const userGuess = input.value.trim();
     const data = await request('/content/guess', 'POST', { 
-        guess: input.value.trim(),
+        guess: userGuess,
         correctAnswer: currentPokemonName
     });
 
@@ -173,35 +172,41 @@ async function sendGuess() {
 document.addEventListener('DOMContentLoaded', () => {
     updateHeaderButton(); 
 
-    const guessBtn = document.getElementById('guessBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const pokemonInput = document.getElementById('pokemonInput');
-    
-    // Logikk for region-knapper i sidebaren
+    // Her kobler vi opp de nye knappene i sidebaren din
     const regionButtons = document.querySelectorAll('.region-btn');
     regionButtons.forEach(btn => {
         btn.onclick = () => {
-            // UI-oppdatering av knapper
+            // UI: Bytte hvilken knapp som lyser blått
             regionButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             
-            // Oppdater valgt region og start på nytt
+            // Logikk: Sett regionen og start nytt spill med de riktige Pokémonene
             activeRegion = btn.getAttribute('data-region');
             startNewGame(false);
         };
     });
 
+    const guessBtn = document.getElementById('guessBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const pokemonInput = document.getElementById('pokemonInput');
+
     if (guessBtn) guessBtn.onclick = sendGuess;
     if (nextBtn) nextBtn.onclick = () => startNewGame(true);
 
     if (pokemonInput) {
-        pokemonInput.addEventListener('keypress', (e) => {
+        pokemonInput.onkeypress = (e) => {
             if (e.key === 'Enter') sendGuess();
-        });
+        };
     }
 
+    // Start første runde
     startNewGame();
 });
+
+// Service Worker (for PWA/Offline støtte)
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
