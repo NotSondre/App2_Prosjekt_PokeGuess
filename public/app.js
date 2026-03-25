@@ -35,7 +35,7 @@ const t = translations[userLang];
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
-let activeRegion = 'all'; 
+let activeRegion = 'all';
 
 function updateHeaderButton() {
     const authBtn = document.getElementById('authBtn'); 
@@ -158,16 +158,17 @@ async function sendGuess() {
 document.addEventListener('DOMContentLoaded', () => {
     updateHeaderButton(); 
 
-    // VIKTIG: Sjekker region-knappene
+    // NYTT: Finn alle knapper med klassen "region-btn"
     const regionButtons = document.querySelectorAll('.region-btn');
-    console.log("Fant antall region-knapper:", regionButtons.length);
-
+    
     regionButtons.forEach(btn => {
         btn.onclick = () => {
-            console.log("Region-knapp klikket:", btn.getAttribute('data-region'));
+            // 1. Fjern "active" farge fra alle knapper
             regionButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            
             activeRegion = btn.getAttribute('data-region');
+            
             startNewGame(false);
         };
     });
