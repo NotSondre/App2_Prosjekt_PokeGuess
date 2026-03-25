@@ -99,6 +99,28 @@ router.post('/update-pic', async (req, res) => {
     }
 });
 
+router.post('/update-password', async (req, res) => {
+    const { username, oldPassword, newPassword } = req.body;
+
+    try {
+        // Hent brukeren fra databasen
+        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
+        if (result.rows.length === 0) return res.status(404).json({ error: "Bruker ikke funnet" });
+
+        // Sjekk om gammelt passord er korrekt
+        const match = await bcrypt.compare(oldPassword, result.rows[0].password);
+        if (!match) return res.status(401).json({ error: "Gammelt passord er feil" });
+
+        // Hash det nye passordet og lagre
+        const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+        await pool.query('UPDATE users SET password = $1 WHERE username = $2', [hashedNewPassword, username]);
+
+        res.json({ message: "Passord oppdatert" });
+    } catch (err) {
+        res.status(500).json({ error: "Serverfeil ved oppdatering av passord" });
+    }
+});
+
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     if (!username || !password || !consent) return res.status(400).json({ error: "Mangler info eller samtykke." });

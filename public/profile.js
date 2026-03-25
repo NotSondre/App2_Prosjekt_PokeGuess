@@ -73,6 +73,8 @@ async function searchPokemon() {
 
 async function saveProfileChanges() {
     const newName = document.getElementById('newNameInput').value.trim();
+    const oldPassword = document.getElementById('oldPasswordInput').value;
+    const newPassword = document.getElementById('newPasswordInput').value;
     const oldName = localStorage.getItem('pokemon_user');
 
     if (newName && newName !== oldName) {
@@ -104,6 +106,30 @@ async function saveProfileChanges() {
             });
         } catch (err) {
             console.error("Bildeoppdatering feilet:", err);
+        }
+    }
+
+    location.reload();
+}
+
+if (oldPassword && newPassword) {
+        try {
+            const res = await fetch(`${API_BASE}/user/update-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    username: localStorage.getItem('pokemon_user'), 
+                    oldPassword, 
+                    newPassword 
+                })
+            });
+            const data = await res.json();
+            if (!data.message) {
+                alert("Passordfeil: " + data.error);
+                return; // Stopper reload hvis passordbytte feilet
+            }
+        } catch (err) {
+            console.error("Passordbytte feilet:", err);
         }
     }
 

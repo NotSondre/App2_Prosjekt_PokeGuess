@@ -136,9 +136,12 @@
     <div id="editPanel">
         <label>Endre Brukernavn:</label>
         <input type="text" id="newNameInput" class="edit-input" placeholder="Nytt navn...">
-        
-        <label>Søk etter nytt bilde (Navn eller ID):</label>
-        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. charmander eller 4">
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <label>Endre Passord</label>
+        <input type="password" id="newPasswordInput" class="edit-input" placeholder="Nytt passord">
+        <input type="password" id="oldPasswordInput" class="edit-input" placeholder="Skriv Inn Gammelt passord For Å Bekrefte">
+        <label>Søk etter nytt bilde (Pokemon Navn eller ID):</label>
+        <input type="text" id="pokemonSearchInput" class="edit-input" placeholder="f.eks. Pikachu eller 25">
         <button onclick="searchPokemon()" class="btn btn-search">Finn Pokémon</button>
 
         <div id="searchPreview">
