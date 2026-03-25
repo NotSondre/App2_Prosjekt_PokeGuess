@@ -21,7 +21,8 @@ async function initDb() {
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 consented BOOLEAN NOT NULL DEFAULT TRUE,
-                score INTEGER DEFAULT 0
+                score INTEGER DEFAULT 0,
+                profile_pic TEXT DEFAULT 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png'
             );
         `);
 
@@ -35,7 +36,16 @@ async function initDb() {
             END $$;
         `);
 
-        // Tabell for individuelle spilløkter
+        await pool.query(`
+            DO $$ 
+            BEGIN 
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                               WHERE table_name='users' AND column_name='profile_pic') THEN
+                    ALTER TABLE users ADD COLUMN profile_pic TEXT DEFAULT 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
+                END IF;
+            END $$;
+        `);
+
         await pool.query(`
             CREATE TABLE IF NOT EXISTS scores (
                 id SERIAL PRIMARY KEY,
@@ -45,22 +55,26 @@ async function initDb() {
             );
         `);
 
-        console.log("Database initialisert: Tabellene users og scores er klare.");
+        console.log("Database initialisert: Tabellene users og scores er klare med alle kolonner.");
     } catch (err) {
         console.error("Kritisk feil ved initialisering av database:", err.message);
     }
 }
 initDb();
 
+
 router.get('/profile', async (req, res) => {
     const { username } = req.query;
     if (!username) return res.status(400).json({ error: "Mangler brukernavn" });
 
     try {
-        const userRes = await pool.query('SELECT profile_pic FROM users WHERE username = $1', [username.trim()]);
+        const cleanUser = username.trim();
+        
+        const userRes = await pool.query('SELECT profile_pic FROM users WHERE username = $1', [cleanUser]);
+        
         const scoreRes = await pool.query(
             'SELECT score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 3',
-            [username.trim()]
+            [cleanUser]
         );
 
         res.json({ 
@@ -68,179 +82,108 @@ router.get('/profile', async (req, res) => {
             topScores: scoreRes.rows 
         });
     } catch (err) {
-        res.status(500).json({ error: "Serverfeil ved henting av profil" });
+        console.error("Databasefeil ved henting av profil:", err.message);
+        res.status(500).json({ error: "Serverfeil ved henting av profil." });
     }
 });
 
 router.post('/update-pic', async (req, res) => {
     const { username, imageUrl } = req.body;
+    
+    if (!username || !imageUrl) {
+        return res.status(400).json({ error: "Mangler brukernavn eller bilde-URL." });
+    }
+
     try {
-        await pool.query('UPDATE users SET profile_pic = $1 WHERE username = $2', [imageUrl, username.trim()]);
-        res.json({ message: "Bilde oppdatert!" });
+        await pool.query(
+            'UPDATE users SET profile_pic = $1 WHERE username = $2', 
+            [imageUrl, username.trim()]
+        );
+        res.json({ message: "Profilbilde oppdatert!" });
     } catch (err) {
-        res.status(500).json({ error: "Kunne ikke lagre bilde" });
+        console.error("Databasefeil ved bildeoppdatering:", err.message);
+        res.status(500).json({ error: "Serverfeil ved lagring av bilde." });
     }
 });
+
 
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     
-    console.log("Registeringsforsok mottatt for:", username);
-
     if (!username || !password) {
         return res.status(400).json({ error: "Brukernavn og passord kreves." });
     }
 
     const hasConsented = (consent === true || consent === "true");
     if (!hasConsented) {
-        return res.status(400).json({ error: "Du ma godta vilkarene (ToS) for a lage bruker." });
+        return res.status(400).json({ error: "Du må godta vilkårene (ToS) for å lage bruker." });
     }
 
     try {
         const id = Math.random().toString(16).slice(2);
         const cleanUser = username.trim();
-        const cleanPass = password.trim();
-
-        const hashedPassword = await bcrypt.hash(cleanPass, SALT_ROUNDS);
+        const hashedPassword = await bcrypt.hash(password.trim(), SALT_ROUNDS);
 
         await pool.query(
             'INSERT INTO users (id, username, password, consented) VALUES ($1, $2, $3, $4)',
             [id, cleanUser, hashedPassword, true]
         );
         
-        console.log("Bruker opprettet i DB:", cleanUser);
-        res.status(201).json({ 
-            message: "Bruker opprettet! Du kan na logge inn.", 
-            user: { name: cleanUser } 
-        });
-
+        res.status(201).json({ message: "Bruker opprettet!" });
     } catch (err) {
-        if (err.code === '23505') {
-            return res.status(400).json({ error: "Brukernavnet er allerede tatt." });
-        }
-        console.error("Databasefeil ved registrering:", err.message, err.stack);
-        res.status(500).json({ error: "Serverfeil: Kunne ikke opprette bruker i databasen." });
+        if (err.code === '23505') return res.status(400).json({ error: "Brukernavnet er tatt." });
+        res.status(500).json({ error: "Serverfeil ved registrering." });
     }
 });
 
+
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({ error: "Brukernavn og passord kreves." });
-    }
+    if (!username || !password) return res.status(400).json({ error: "Mangler info." });
 
     try {
         const cleanUser = username.trim();
-        const cleanPass = password.trim();
+        const result = await pool.query('SELECT username, password FROM users WHERE username = $1', [cleanUser]);
 
-        const result = await pool.query(
-            'SELECT username, password, score FROM users WHERE username = $1',
-            [cleanUser]
-        );
+        if (result.rows.length === 0) return res.status(401).json({ error: "Feil brukernavn/passord." });
 
-        if (result.rows.length === 0) {
-            return res.status(401).json({ error: "Feil brukernavn eller passord." });
-        }
+        const match = await bcrypt.compare(password.trim(), result.rows[0].password);
+        if (!match) return res.status(401).json({ error: "Feil brukernavn/passord." });
 
-        const passwordMatch = await bcrypt.compare(cleanPass, result.rows[0].password);
-        if (!passwordMatch) {
-            return res.status(401).json({ error: "Feil brukernavn eller passord." });
-        }
-
-        console.log("Logget inn:", cleanUser);
-        res.json({ 
-            message: "Logget inn!", 
-            user: { 
-                name: result.rows[0].username,
-                score: result.rows[0].score 
-            } 
-        });
-
+        res.json({ message: "Logget inn!", user: { name: cleanUser } });
     } catch (err) {
-        console.error("Databasefeil ved innlogging:", err.message);
         res.status(500).json({ error: "Serverfeil ved innlogging." });
     }
 });
 
-router.delete('/delete', async (req, res) => {
-    const { username, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ error: "Mangler brukernavn eller passord." });
-    }
-
-    try {
-        const cleanUser = username.trim();
-        const cleanPass = password.trim();
-
-        const result = await pool.query(
-            'SELECT password FROM users WHERE username = $1',
-            [cleanUser]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Fant ikke brukeren eller feil passord." });
-        }
-
-        const passwordMatch = await bcrypt.compare(cleanPass, result.rows[0].password);
-        if (!passwordMatch) {
-            return res.status(401).json({ error: "Fant ikke brukeren eller feil passord." });
-        }
-
-        await pool.query('DELETE FROM scores WHERE username = $1', [cleanUser]);
-        await pool.query('DELETE FROM users WHERE username = $1', [cleanUser]);
-
-        console.log("Slettet bruker:", username);
-        res.json({ message: "Bruker slettet fra databasen." });
-
-    } catch (err) {
-        console.error("Databasefeil ved sletting:", err.message);
-        res.status(500).json({ error: "Serverfeil ved sletting." });
-    }
-});
-
-// Lagrer en spilløkt når brukeren er ferdig (score > 0)
 router.post('/score', async (req, res) => {
     const { username, score } = req.body;
-
-    if (!username || score === undefined) {
-        return res.status(400).json({ error: "Mangler brukernavn eller poengsum." });
-    }
-
-    if (score <= 0) {
-        return res.json({ message: "Score på 0 lagres ikke." });
-    }
+    if (!username || score === undefined || score <= 0) return res.json({ message: "Ingen score lagret." });
 
     try {
-        await pool.query(
-            'INSERT INTO scores (username, score) VALUES ($1, $2)',
-            [username.trim(), score]
-        );
+        await pool.query('INSERT INTO scores (username, score) VALUES ($1, $2)', [username.trim(), score]);
         res.json({ message: "Score lagret!" });
     } catch (err) {
-        console.error("Databasefeil ved score-lagring:", err.message);
-        res.status(500).json({ error: "Serverfeil ved score-lagring." });
+        res.status(500).json({ error: "Serverfeil ved lagring." });
     }
 });
 
-// Henter brukerens topp 3 scorer
-router.get('/profile', async (req, res) => {
-    const { username } = req.query;
 
-    if (!username) {
-        return res.status(400).json({ error: "Mangler brukernavn." });
-    }
-
+router.delete('/delete', async (req, res) => {
+    const { username, password } = req.body;
     try {
-        const result = await pool.query(
-            'SELECT score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 3',
-            [username.trim()]
-        );
-        res.json({ topScores: result.rows });
+        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username.trim()]);
+        if (result.rows.length === 0) return res.status(404).json({ error: "Fant ikke bruker." });
+
+        const match = await bcrypt.compare(password.trim(), result.rows[0].password);
+        if (!match) return res.status(401).json({ error: "Feil passord." });
+
+        await pool.query('DELETE FROM scores WHERE username = $1', [username.trim()]);
+        await pool.query('DELETE FROM users WHERE username = $1', [username.trim()]);
+        res.json({ message: "Bruker slettet." });
     } catch (err) {
-        console.error("Databasefeil ved henting av profil:", err.message);
-        res.status(500).json({ error: "Serverfeil ved henting av profil." });
+        res.status(500).json({ error: "Serverfeil ved sletting." });
     }
 });
 
