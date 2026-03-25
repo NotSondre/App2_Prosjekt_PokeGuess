@@ -3,179 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="PokéGuess - Gjett Pokémon og øk poengsummen din.">
-    <title>App2 - PokéGuess</title>
-    <link rel="manifest" href="manifest.json">
+    <title>PokéGuess - Hvem er denne Pokémonen?</title>
     <style>
-        body { 
-            font-family: system-ui, sans-serif; 
-            text-align: center; 
-            padding: 20px;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
             padding-top: 80px;
-            background-color: #f4f4f4;
             background-image: url('Images/PokeGuess-Background.jpg');
             background-size: cover;
-            background-position: center;
             background-attachment: fixed;
-            color: #000; 
-            margin: 0; 
         }
 
         .header {
-            position: fixed; top: 0; left: 0; right: 0;
-            height: 60px; background: #b2d0ec; color: #fff;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 100;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background-color: #b2d0ec;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 1000;
         }
 
-        .header h2 { margin: 0; font-size: 1.2rem; }
-
-        .login-trigger {
-            padding: 8px 18px; background: #fff; color: #000;
-            border: none; border-radius: 5px; cursor: pointer; font-weight: bold;
-        }
-
-        .login-trigger:hover { background: #ddd; }
-
-        user-manager { display: none; position: fixed; top: 70px; right: 20px; z-index: 99; }
-        user-manager.active { display: block; }
-        
-        .score-board { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; color: #000; }
-
-        .region-container { margin-bottom: 15px; }
-        #regionSelect { 
-            width: 100%; 
-            max-width: 320px; 
-            padding: 8px; 
-            background: #fff; 
-            border: 2px solid #000; 
-            border-radius: 5px; 
-            font-weight: bold;
+        .logo img {
+            height: 40px;
             cursor: pointer;
         }
 
-        .game-area { 
-            margin-top: 10px; padding: 30px; border: 3px solid #000; 
-            border-radius: 15px; background: #fff; display: inline-block; min-width: 320px;
+        /* Spill-layout */
+        .game-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            align-items: flex-start;
         }
 
-        #imgContainer {
-            width: 200px;
-            height: 200px;
-            margin: 0 auto 20px auto;
+        /* Venstre side: Regionsvelger */
+        .region-sidebar {
+            background: white;
+            border: 3px solid #000;
+            border-radius: 15px;
+            padding: 15px;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .region-sidebar h3 {
+            margin: 0 0 10px 0;
+            text-align: center;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .region-btn {
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .region-btn:hover {
+            background: #f0f8ff;
+            transform: translateX(5px);
+        }
+
+        .region-btn.active {
+            background: #2196F3;
+            color: white;
+            border-color: #0d47a1;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Midten: Spillkortet */
+        .game-card {
+            background: white;
+            border: 3px solid #000;
+            border-radius: 20px;
+            padding: 30px;
+            flex-grow: 1;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+            background: #f8f9fa;
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .pokemon-box {
+            height: 300px;
+            background-color: #f9f9f9;
+            border-radius: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #f9f9f9;
-            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px inset #eee;
+            position: relative;
             overflow: hidden;
         }
 
-        #pokemonImage { 
-            max-width: 100%;
-            max-height: 100%;
-            filter: brightness(0); 
-            transition: filter 0.5s ease;
-            visibility: hidden; 
+        #pokemonImage {
+            max-height: 90%;
+            max-width: 90%;
+            display: none;
+            filter: brightness(0); /* Starter som silhuett */
+            transition: filter 0.3s ease;
         }
 
-        #pokemonImage.revealed { filter: brightness(1); visibility: visible !important; }
+        #pokemonImage.revealed {
+            filter: brightness(1);
+        }
 
-        input, button, select { min-height: 44px; font-size: 1rem; padding: 5px 15px; border: 2px solid #000; border-radius: 5px; }
-        button { cursor: pointer; background: #000; color: #fff; font-weight: bold; }
-        button:hover { background: #333; }
-        #nextBtn { background: #eee; color: #000; margin-left: 5px; }
+        #pokemonInput {
+            width: 80%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            outline: none;
+        }
+
+        #pokemonInput:focus {
+            border-color: #2196F3;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        #guessBtn { background-color: #4CAF50; color: white; }
+        #nextBtn { background-color: #2196F3; color: white; }
+        
+        #authBtn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #guessResult {
+            height: 30px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .region-sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 10px;
+            }
+            .region-btn {
+                white-space: nowrap;
+            }
+        }
     </style>
 </head>
 <body>
 
- <header class="header">
-<a href="index.html" style="display: flex; align-items: center;">
-        <img src="Images/Poke-Guessr_Logo.png" alt="PokéGuess" style="height: 45px;">
-    </a>
-    <button class="login-trigger" id="toggleLogin" aria-label="Åpne brukermeny">Logg Inn / Opprett</button>
+<header class="header">
+    <div class="logo">
+        <a href="index.html">
+            <img src="Images/Poke-Guessr_Logo.png" alt="PokéGuess Logo">
+        </a>
+    </div>
+    <div id="userSection">
+        <button id="authBtn" onclick="location.href='login.html'">Logg inn</button>
+    </div>
 </header>
-    <main>
-        <img src="Images/Poke-Guessr_Logo.png" alt="PokéGuessr" style="width: 500px; margin-bottom: 10px;">
 
-        <user-manager id="userMenu"></user-manager>
+<main>
+    <div class="game-container">
+        
+        <aside class="region-sidebar">
+            <h3>Regioner</h3>
+            <button class="region-btn active" data-region="all">Alle Generasjoner</button>
+            <button class="region-btn" data-region="kanto">Kanto (Gen 1)</button>
+            <button class="region-btn" data-region="johto">Johto (Gen 2)</button>
+            <button class="region-btn" data-region="hoenn">Hoenn (Gen 3)</button>
+            <button class="region-btn" data-region="sinnoh">Sinnoh (Gen 4)</button>
+            <button class="region-btn" data-region="unova">Unova (Gen 5)</button>
+            <button class="region-btn" data-region="kalos">Kalos (Gen 6)</button>
+            <button class="region-btn" data-region="alola">Alola (Gen 7)</button>
+            <button class="region-btn" data-region="galar">Galar (Gen 8)</button>
+            <button class="region-btn" data-region="paldea">Paldea (Gen 9)</button>
+        </aside>
 
-        <div class="score-board">Poeng: <span id="currentScore">0</span></div>
-
-        <div class="region-container">
-            <select id="regionSelect" aria-label="Velg region">
-                <option value="all">Alle Generasjoner</option>
-                <option value="gen1">Gen 1: Kanto</option>
-                <option value="gen2">Gen 2: Johto</option>
-                <option value="gen3">Gen 3: Hoenn</option>
-                <option value="gen4">Gen 4: Sinnoh</option>
-                <option value="gen5">Gen 5: Unova</option>
-                <option value="gen6">Gen 6: Kalos</option>
-                <option value="gen7">Gen 7: Alola</option>
-                <option value="gen8">Gen 8: Galar</option>
-                <option value="gen9">Gen 9: Paldea</option>
-            </select>
-        </div>
-
-        <div class="game-area" role="region" aria-label="Spillområde">
-            <div id="imgContainer">
-                <img id="pokemonImage" src="" alt="Hvilken Pokémon?">
-            </div>
+        <section class="game-card">
+            <div class="score-display">Poeng: <span id="currentScore">0</span></div>
             
-            <input type="text" id="pokemonInput" placeholder="Navn..." aria-label="Pokémon navn">
-            <div style="margin-top: 15px;">
-                <button id="guessBtn">Gjett!</button>
-                <button id="nextBtn">Vet Ikke</button>
+            <div class="pokemon-box">
+                <img id="pokemonImage" src="" alt="Hvem er denne Pokémonen?">
             </div>
-            <p id="guessResult" style="margin-top: 15px; font-weight: bold; min-height: 1.2em;" aria-live="polite"></p>
-        </div>
-    </main>
 
-    <template id="user-manager-template">
-        <style>
-            .user-box { 
-                border: 2px solid #000; padding: 20px; width: 280px; 
-                border-radius: 8px; text-align: left; background: #fff;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            }
-            .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 15px; }
-            .tab-btn { flex: 1; border: none; background: none; padding: 10px; cursor: pointer; font-weight: bold; color: #666; }
-            .tab-btn.active { color: #000; border-bottom: 2px solid #000; }
-            input { display: block; width: 100%; margin-bottom: 10px; box-sizing: border-box; min-height: 44px; border: 1px solid #000; padding: 8px; }
-            .action-btn { width: 100%; min-height: 44px; background: #000; color: #fff; border: none; cursor: pointer; margin-top: 10px; font-weight: bold; }
-            .del-link { display: block; text-align: center; margin-top: 15px; font-size: 0.8rem; color: #d00; cursor: pointer; }
-            .tos-area { font-size: 0.8rem; margin-top: 10px; display: none; }
-            .tos-area.visible { display: block; }
-            #msg { margin-top: 10px; font-style: italic; color: #000; }
-            a { color: #0000EE; font-weight: bold; text-decoration: underline; }
-        </style>
-        <div class="user-box" role="form">
-            <div class="tabs">
-                <button id="tabLogin" class="tab-btn active">Logg inn</button>
-                <button id="tabReg" class="tab-btn">Opprett</button>
-            </div>
-            <input type="text" id="uname" placeholder="Brukernavn" aria-label="Brukernavn">
-            <input type="password" id="psw" placeholder="Passord" aria-label="Passord">
+            <div id="guessResult"></div>
             
-            <div id="tosArea" class="tos-area">
-                <label>
-                    <input type="checkbox" id="consent"> 
-                    Godta <a href="Terms%20Of%20Service%20-%20PokeGuesser.pdf" target="_blank">ToS</a> & 
-                    <a href="Privacy%20Policy%20-%20PokeGuesser.pdf" target="_blank">Privacy Policy</a>
-                </label>
+            <input type="text" id="pokemonInput" placeholder="Skriv navnet her..." autocomplete="off">
+            
+            <div class="button-group">
+                <button id="guessBtn" class="btn">Gjett!</button>
+                <button id="nextBtn" class="btn">Neste Pokémon</button>
             </div>
+        </section>
 
-            <button id="mainActionBtn" class="action-btn">Logg inn</button>
-            <p id="msg" aria-live="polite"></p>
-            <span id="delBtn" class="del-link">Slett konto</span>
-        </div>
-    </template>
+    </div>
+</main>
 
-    <script type="module" src="app.js"></script>
-    <script>
-        document.getElementById('toggleLogin').onclick = () => {
-            document.getElementById('userMenu').classList.toggle('active');
-        };
-    </script>
+<script src="app.js"></script>
 </body>
 </html>

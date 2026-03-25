@@ -10,7 +10,7 @@ const translations = {
         guess_correct: "Riktig! Det var ",
         guess_wrong: "Feil Pokémon, prøv igjen!",
         it_was: "Det var ",
-        login_btn: "Logg Inn / Opprett",
+        login_btn: "Logg inn",
         profile_btn: "Profil: "
     },
     en: {
@@ -23,7 +23,7 @@ const translations = {
         guess_correct: "Correct! It was ",
         guess_wrong: "Wrong Pokémon, try again!",
         it_was: "It was ",
-        login_btn: "Login / Register",
+        login_btn: "Login",
         profile_btn: "Profile: "
     }
 };
@@ -35,24 +35,24 @@ const t = translations[userLang];
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
+let activeRegion = 'all'; // Holder styr på valgt region fra sidebaren
 
 // Oppdaterer knappen i headeren basert på innloggingsstatus
 function updateHeaderButton() {
-    const authBtn = document.getElementById('toggleLogin'); // Bruker ID fra index.html
-    const userMenu = document.getElementById('userMenu');
+    const authBtn = document.getElementById('authBtn'); // Samsvarer med index.html
     const username = localStorage.getItem('pokemon_user');
 
-    if (username) {
+    if (username && authBtn) {
         authBtn.innerText = `${t.profile_btn}${username}`;
         authBtn.onclick = (e) => {
             e.preventDefault();
             window.location.href = 'profile.html';
         };
-    } else {
+    } else if (authBtn) {
         authBtn.innerText = t.login_btn;
         authBtn.onclick = (e) => {
             e.preventDefault();
-            userMenu.classList.toggle('active');
+            window.location.href = 'login.html';
         };
     }
 }
@@ -83,94 +83,6 @@ async function saveScore() {
     await request('/user/score', 'POST', { username, score });
 }
 
-// --- USER MANAGER COMPONENT ---
-class UserManager extends HTMLElement {
-    constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
-        const template = document.getElementById('user-manager-template');
-        if (template) {
-            this.shadowRoot.appendChild(template.content.cloneNode(true));
-        }
-        this.mode = 'login'; 
-    }
-
-    connectedCallback() {
-        const tabLogin = this.shadowRoot.getElementById('tabLogin');
-        const tabReg = this.shadowRoot.getElementById('tabReg');
-        const mainBtn = this.shadowRoot.getElementById('mainActionBtn');
-        const tosArea = this.shadowRoot.getElementById('tosArea');
-        const delBtn = this.shadowRoot.getElementById('delBtn');
-
-        if(tabLogin) tabLogin.onclick = () => {
-            this.mode = 'login';
-            tabLogin.classList.add('active');
-            tabReg.classList.remove('active');
-            mainBtn.innerText = userLang === 'no' ? 'Logg inn' : 'Login';
-            tosArea.classList.remove('visible');
-        };
-
-        if(tabReg) tabReg.onclick = () => {
-            this.mode = 'register';
-            tabReg.classList.add('active');
-            tabLogin.classList.remove('active');
-            mainBtn.innerText = userLang === 'no' ? 'Opprett bruker' : 'Create Account';
-            tosArea.classList.add('visible');
-        };
-
-        if(mainBtn) mainBtn.onclick = () => {
-            const endpoint = this.mode === 'login' ? '/user/login' : '/user/register';
-            this.handleAction(endpoint, 'POST');
-        };
-
-        if(delBtn) delBtn.onclick = () => this.handleAction('/user/delete', 'DELETE');
-    }
-
-    async handleAction(endpoint, method) {
-        const username = this.shadowRoot.getElementById('uname').value;
-        const password = this.shadowRoot.getElementById('psw').value;
-        const consent = this.shadowRoot.getElementById('consent').checked;
-        const msgBox = this.shadowRoot.getElementById('msg');
-
-        if (!username || !password) {
-            msgBox.innerText = t.fill_fields;
-            msgBox.style.color = "red";
-            return;
-        }
-
-        if (this.mode === 'register' && !consent) {
-            msgBox.innerText = t.tos_error;
-            msgBox.style.color = "red";
-            return;
-        }
-
-        const result = await request(endpoint, method, { username, password, consent });
-        
-        if (result.error) {
-            msgBox.innerText = result.error;
-            msgBox.style.color = "red";
-        } else {
-            msgBox.innerText = result.message;
-            msgBox.style.color = "green";
-            
-            if (this.mode === 'login') {
-                localStorage.setItem('pokemon_user', username);
-                updateHeaderButton(); 
-                setTimeout(() => {
-                    this.parentElement.classList.remove('active');
-                }, 1500);
-            }
-
-            if (method === 'DELETE') {
-                localStorage.removeItem('pokemon_user');
-                updateHeaderButton(); 
-            }
-        }
-    }
-}
-
-customElements.define('user-manager', UserManager);
-
 // --- GAME LOGIC ---
 
 function updateScoreDisplay() {
@@ -182,15 +94,15 @@ async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
-    const regionSelect = document.getElementById('regionSelect');
     
+    // Hvis brukeren trykker "Neste" uten å ha gjettet riktig
     if (isSkip && img && !img.classList.contains('revealed')) {
         await saveScore();
         score = 0; 
         updateScoreDisplay();
         
         img.classList.add('revealed'); 
-        img.style.visibility = 'visible';
+        img.style.display = 'block';
         const nameToShow = currentPokemonName || "denne Pokémonen";
         if (resultDiv) {
             resultDiv.innerText = `${t.it_was}${nameToShow}!`;
@@ -201,23 +113,26 @@ async function startNewGame(isSkip = false) {
         return;
     }
 
+    // Nullstill UI for ny runde
     if (input) { input.value = ""; input.focus(); }
     if (resultDiv) resultDiv.innerText = "";
     if (img) {
         img.classList.remove('revealed'); 
-        img.style.visibility = 'hidden'; 
+        img.style.display = 'none'; 
         img.src = "";
     }
 
-    const selectedRegion = regionSelect ? regionSelect.value : 'all';
-    const data = await request(`/content/pokemon?region=${selectedRegion}&t=${Date.now()}`);
+    // Hent ny Pokémon basert på aktiv region
+    const data = await request(`/content/pokemon?region=${activeRegion}&t=${Date.now()}`);
     
     if (data && !data.error) {
         const bildeUrl = data.imageUrl || data.image || data.url;
         if (img && bildeUrl) {
             img.src = bildeUrl;
             currentPokemonName = data.name || data.pokemon || "Ukjent";
-            img.onload = () => { img.style.visibility = 'visible'; };
+            img.onload = () => { 
+                img.style.display = 'block'; 
+            };
         }
     }
 }
@@ -229,20 +144,18 @@ async function sendGuess() {
 
     if (!input || !input.value || (img && img.classList.contains('revealed'))) return;
 
+    // Send gjetting til backend
     const data = await request('/content/guess', 'POST', { 
-        guess: input.value,
+        guess: input.value.trim(),
         correctAnswer: currentPokemonName
     });
 
     if (!resultDiv) return;
 
     if (data.success) {
-        resultDiv.innerText = data.message || `${t.guess_correct}${currentPokemonName}!`; 
+        resultDiv.innerText = `${t.guess_correct}${currentPokemonName}!`; 
         resultDiv.style.color = "green";
-        if (img) {
-            img.classList.add('revealed');
-            img.style.visibility = 'visible';
-        }
+        if (img) img.classList.add('revealed');
         
         score++; 
         updateScoreDisplay();
@@ -250,7 +163,7 @@ async function sendGuess() {
 
         setTimeout(() => startNewGame(false), 1500);
     } else {
-        resultDiv.innerText = data.message || t.guess_wrong;
+        resultDiv.innerText = t.guess_wrong;
         resultDiv.style.color = "red";
     }
 }
@@ -263,14 +176,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const guessBtn = document.getElementById('guessBtn');
     const nextBtn = document.getElementById('nextBtn');
     const pokemonInput = document.getElementById('pokemonInput');
-    const regionSelect = document.getElementById('regionSelect');
+    
+    // Logikk for region-knapper i sidebaren
+    const regionButtons = document.querySelectorAll('.region-btn');
+    regionButtons.forEach(btn => {
+        btn.onclick = () => {
+            // UI-oppdatering av knapper
+            regionButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            // Oppdater valgt region og start på nytt
+            activeRegion = btn.getAttribute('data-region');
+            startNewGame(false);
+        };
+    });
 
     if (guessBtn) guessBtn.onclick = sendGuess;
     if (nextBtn) nextBtn.onclick = () => startNewGame(true);
-
-    if (regionSelect) {
-        regionSelect.onchange = () => startNewGame(false);
-    }
 
     if (pokemonInput) {
         pokemonInput.addEventListener('keypress', (e) => {
@@ -280,6 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     startNewGame();
 });
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('SW registrert'))
+        .catch(err => console.error('SW feilet', err));
+}
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js')
