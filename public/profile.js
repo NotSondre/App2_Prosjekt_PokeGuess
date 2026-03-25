@@ -21,9 +21,11 @@ async function loadProfile() {
 
         const container = document.getElementById('scoreContainer');
         if (data.topScores && data.topScores.length > 0) {
+            // Oppdatert: Lagt til slette-knapp for hver score
             container.innerHTML = data.topScores.map(s => `
-                <div class="score-item">
+                <div class="score-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
                     <span><strong>${s.score}</strong> poeng (${new Date(s.played_at).toLocaleDateString()})</span>
+                    <button onclick="deleteScore(${s.id})" class="btn" style="background:#ff4444; padding: 4px 10px; font-size: 0.8rem; color: white; border: none; border-radius: 5px; cursor: pointer;">Slett</button>
                 </div>
             `).join('');
         } else {
@@ -36,11 +38,33 @@ async function loadProfile() {
     }
 }
 
+async function deleteScore(scoreId) {
+    const username = localStorage.getItem('pokemon_user');
+    if (!username || !confirm("Er du sikker på at du vil slette denne poengsummen?")) return;
+
+    try {
+        const response = await fetch(`${API_BASE}/user/score/${scoreId}?username=${encodeURIComponent(username)}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            console.log("Score slettet!");
+            loadProfile(); 
+        } else {
+            const data = await response.json().catch(() => ({}));
+            alert("Kunne ikke slette: " + (data.error || "Serverfeil"));
+        }
+    } catch (err) {
+        console.error("Sletting feilet:", err);
+        alert("Nettverksfeil: Sjekk internettforbindelsen eller om serveren er nede.");
+    }
+}
+
 async function searchPokemon() {
     const input = document.getElementById('pokemonSearchInput').value.trim().toLowerCase();
     const panel = document.getElementById('searchPreview');
     const successMsg = document.getElementById('searchSuccess');
-    const nameSpan = document.getElementById('chosenPokemonName'); // Nytt felt for navnet
+    const nameSpan = document.getElementById('chosenPokemonName');
     const status = document.getElementById('searchStatus');
     const preview = document.getElementById('previewPic');
 
@@ -111,7 +135,7 @@ async function saveProfileChanges() {
 async function deleteAccount() {
     const password = document.getElementById('deleteConfirmPassword').value;
     if (!password) return alert("Skriv passord!");
-    if (!confirm("Slette kontoen permanent?")) return;
+    if (!confirm("Slette kontoen permanent? Dette kan ikke angres!")) return;
 
     const res = await fetch(`${API_BASE}/user/delete`, {
         method: 'DELETE',
@@ -122,7 +146,10 @@ async function deleteAccount() {
     if (res.ok) {
         localStorage.removeItem('pokemon_user');
         window.location.href = 'login.html';
-    } else { alert("Feil passord."); }
+    } else { 
+        const data = await res.json();
+        alert("Feil: " + (data.error || "Ugyldig passord")); 
+    }
 }
 
 function toggleEdit() {
@@ -139,5 +166,7 @@ window.toggleEdit = toggleEdit;
 window.searchPokemon = searchPokemon;
 window.saveProfileChanges = saveProfileChanges;
 window.deleteAccount = deleteAccount;
+window.deleteScore = deleteScore;
 window.logout = logout;
+
 document.addEventListener('DOMContentLoaded', loadProfile);
