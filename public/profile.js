@@ -1,13 +1,9 @@
 const API_BASE = 'https://poke-guessr.onrender.com';
-const medals = ['🥇', '🥈', '🥉'];
 let selectedImageUrl = "";
 
 async function loadProfile() {
     const username = localStorage.getItem('pokemon_user');
-    if (!username) {
-        document.getElementById('notLoggedIn').style.display = 'block';
-        return;
-    }
+    if (!username) return window.location.href = 'index.html';
 
     document.getElementById('usernameDisplay').innerText = username;
 
@@ -15,68 +11,65 @@ async function loadProfile() {
         const res = await fetch(`${API_BASE}/user/profile?username=${encodeURIComponent(username)}`);
         const data = await res.json();
 
-        if (data.profilePic) {
-            document.getElementById('currentPic').src = data.profilePic;
-        }
+        if (data.profilePic) document.getElementById('currentPic').src = data.profilePic;
 
-        const scoreList = document.getElementById('scoreList');
+        const list = document.getElementById('scoreList');
         if (data.topScores && data.topScores.length > 0) {
-            scoreList.innerHTML = '';
-            data.topScores.forEach((entry, i) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span>${medals[i] || (i + 1 + ".")}</span>
-                    <strong>${entry.score} poeng</strong>
-                    <span style="font-size: 0.8rem; color: #888;">${new Date(entry.played_at).toLocaleDateString('no-NO')}</span>
-                `;
-                scoreList.appendChild(li);
-            });
+            list.innerHTML = data.topScores.map(s => `<li><span>${s.score} poeng</span> <small>${new Date(s.played_at).toLocaleDateString()}</small></li>`).join('');
         } else {
             document.getElementById('noScoresMsg').style.display = 'block';
         }
-    } catch (err) {
-        console.error("Feil ved lasting:", err);
-    }
+    } catch (err) { console.error(err); }
 }
 
-async function searchPokemon() {
+document.getElementById('editProfileBtn').onclick = () => {
+    const section = document.getElementById('editSection');
+    const isHidden = section.style.display === 'none' || section.style.display === '';
+    section.style.display = isHidden ? 'block' : 'none';
+};
+
+document.getElementById('searchBtn').onclick = async () => {
     const name = document.getElementById('pokeSearch').value.toLowerCase().trim();
     if (!name) return;
-
     try {
         const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${name}`);
-        if (!res.ok) throw new Error();
-        
         const data = await res.json();
-        selectedImageUrl = data.sprites.front_default; // Dette er piksel-spriten
-        
-        const previewImg = document.getElementById('previewImg');
-        previewImg.src = selectedImageUrl;
+        selectedImageUrl = data.sprites.front_default;
+        document.getElementById('previewImg').src = selectedImageUrl;
         document.getElementById('searchPreview').style.display = 'block';
-    } catch (err) {
-        alert("Fant ikke Pokémonen. Husk engelsk navn!");
-    }
-}
+    } catch { alert("Fant ikke Pokémon."); }
+};
 
-async function saveProfilePic() {
+document.getElementById('confirmPicBtn').onclick = async () => {
     const username = localStorage.getItem('pokemon_user');
-    if (!username || !selectedImageUrl) return;
-
-    const res = await fetch(`${API_BASE}/user/update-pic`, {
+    await fetch(`${API_BASE}/user/update-pic`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ username, imageUrl: selectedImageUrl })
+    });
+    document.getElementById('currentPic').src = selectedImageUrl;
+    document.getElementById('searchPreview').style.display = 'none';
+};
+
+document.getElementById('changeUsernameBtn').onclick = async () => {
+    const oldName = localStorage.getItem('pokemon_user');
+    const newName = document.getElementById('newUsernameInput').value.trim();
+    if (!newName || oldName === newName) return;
+
+    const res = await fetch(`${API_BASE}/user/update-username`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ oldName, newName })
     });
 
     if (res.ok) {
-        document.getElementById('currentPic').src = selectedImageUrl;
-        document.getElementById('searchPreview').style.display = 'none';
-        document.getElementById('pokeSearch').value = "";
+        localStorage.setItem('pokemon_user', newName);
+        location.reload();
+    } else {
+        alert("Navnet er opptatt eller feil oppstod.");
     }
-}
+};
 
-document.getElementById('searchBtn').onclick = searchPokemon;
-document.getElementById('confirmPicBtn').onclick = saveProfilePic;
 document.getElementById('logoutBtn').onclick = () => {
     localStorage.removeItem('pokemon_user');
     window.location.href = 'index.html';

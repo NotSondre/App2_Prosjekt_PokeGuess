@@ -8,9 +8,7 @@ const SALT_ROUNDS = 12;
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false 
-    }
+    ssl: { rejectUnauthorized: false }
 });
 
 async function initDb() {
@@ -26,25 +24,16 @@ async function initDb() {
             );
         `);
 
-        await pool.query(`
-            DO $$ 
-            BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                               WHERE table_name='users' AND column_name='consented') THEN
-                    ALTER TABLE users ADD COLUMN consented BOOLEAN NOT NULL DEFAULT TRUE;
-                END IF;
-            END $$;
-        `);
-
-        await pool.query(`
-            DO $$ 
-            BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                               WHERE table_name='users' AND column_name='profile_pic') THEN
-                    ALTER TABLE users ADD COLUMN profile_pic TEXT DEFAULT 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
-                END IF;
-            END $$;
-        `);
+        const cols = ['consented', 'profile_pic'];
+        for (const col of cols) {
+            await pool.query(`
+                DO $$ BEGIN 
+                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='${col}') THEN
+                        ALTER TABLE users ADD COLUMN ${col} ${col === 'consented' ? 'BOOLEAN DEFAULT TRUE' : 'TEXT DEFAULT \'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png\''};
+                    END IF;
+                END $$;
+            `);
+        }
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS scores (
@@ -54,36 +43,48 @@ async function initDb() {
                 played_at TIMESTAMP DEFAULT NOW()
             );
         `);
-
-        console.log("Database initialisert: Tabellene users og scores er klare med alle kolonner.");
+        console.log("Database klar med profil-støtte.");
     } catch (err) {
-        console.error("Kritisk feil ved initialisering av database:", err.message);
+        console.error("DB Init feil:", err.message);
     }
 }
 initDb();
 
-
 router.get('/profile', async (req, res) => {
     const { username } = req.query;
     if (!username) return res.status(400).json({ error: "Mangler brukernavn" });
-
     try {
-        const cleanUser = username.trim();
-        
-        const userRes = await pool.query('SELECT profile_pic FROM users WHERE username = $1', [cleanUser]);
-        
-        const scoreRes = await pool.query(
-            'SELECT score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 3',
-            [cleanUser]
-        );
-
-        res.json({ 
-            profilePic: userRes.rows[0]?.profile_pic || null,
-            topScores: scoreRes.rows 
-        });
+        const userRes = await pool.query('SELECT profile_pic FROM users WHERE username = $1', [username.trim()]);
+        const scoreRes = await pool.query('SELECT score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 3', [username.trim()]);
+        res.json({ profilePic: userRes.rows[0]?.profile_pic || null, topScores: scoreRes.rows });
     } catch (err) {
-        console.error("Databasefeil ved henting av profil:", err.message);
-        res.status(500).json({ error: "Serverfeil ved henting av profil." });
+        res.status(500).json({ error: "Serverfeil" });
+    }
+});
+
+router.post('/update-pic', async (req, res) => {
+    const { username, imageUrl } = req.body;
+    try {
+        await pool.query('UPDATE users SET profile_pic = $1 WHERE username = $2', [imageUrl, username.trim()]);
+        res.json({ message: "Bilde oppdatert!" });
+    } catch (err) {
+        res.status(500).json({ error: "Kunne ikke lagre bilde" });
+    }
+});
+
+// Endrer brukernavn i begge tabeller
+router.post('/update-username', async (req, res) => {
+    const { oldName, newName } = req.body;
+    if (!oldName || !newName) return res.status(400).json({ error: "Mangler navn" });
+    try {
+        const check = await pool.query('SELECT id FROM users WHERE username = $1', [newName.trim()]);
+        if (check.rows.length > 0) return res.status(400).json({ error: "Navnet er opptatt" });
+
+        await pool.query('UPDATE users SET username = $1 WHERE username = $2', [newName.trim(), oldName.trim()]);
+        await pool.query('UPDATE scores SET username = $1 WHERE username = $2', [newName.trim(), oldName.trim()]);
+        res.json({ message: "Navn oppdatert!" });
+    } catch (err) {
+        res.status(500).json({ error: "Serverfeil ved navnebytte" });
     }
 });
 

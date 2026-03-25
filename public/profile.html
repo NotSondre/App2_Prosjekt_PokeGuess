@@ -52,47 +52,47 @@
         button { padding: 8px 12px; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; }
         #confirmPicBtn { background: #4CAF50; color: white; margin-top: 5px; }
         #logoutBtn { background: #ff4444; color: white; }
+        button { cursor: pointer; padding: 8px 12px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold; }
+        #editProfileBtn { background: #e0e0e0; margin-top: 10px; }
+        #confirmPicBtn, #changeUsernameBtn { background: #4CAF50; color: white; border: none; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <header class="header">
-    <a href="index.html">
-        <img src="Images/Poke-Guessr_Logo.png" alt="Logo" style="height: 40px;">
-    </a>
-    <button id="logoutBtn">Logg ut</button>
+    <a href="index.html" style="font-weight: bold; text-decoration: none; color: #000;">← Spill</a>
+    <button id="logoutBtn" style="background: #ff4444; color: white; border: none;">Logg ut</button>
 </header>
 
-<main>
-    <div class="profile-box">
-        <h1>Min Profil</h1>
-        
-        <div class="pic-section">
-            <img id="currentPic" src="" alt="Profilbilde" style="width: 120px; height: 120px;">
-            <div class="username" id="usernameDisplay" style="font-weight: bold; font-size: 1.2rem; margin: 10px 0;"></div>
-            
-            <div class="search-area">
-                <p style="font-size: 0.9rem; margin-bottom: 5px;">Søk etter piksel-profilbilde:</p>
-                <input type="text" id="pokeSearch" placeholder="Pokémon navn...">
-                <button id="searchBtn">Søk</button>
-                
-                <div id="searchPreview" style="display: none; margin-top: 10px;">
-                    <img id="previewImg" src="" style="width: 80px; height: 80px;">
-                    <br>
-                    <button id="confirmPicBtn">Lagre dette bildet</button>
-                </div>
+<div class="profile-box">
+    <img id="currentPic" src="" alt="Bilde" style="width: 100px; height: 100px;">
+    <h2 id="usernameDisplay">Laster...</h2>
+    
+    <button id="editProfileBtn">⚙️ Rediger profil</button>
+
+    <div id="editSection" class="edit-section">
+        <div style="margin-bottom: 15px;">
+            <strong>Bytt bilde (navn på engelsk):</strong><br>
+            <input type="text" id="pokeSearch" placeholder="f.eks. pikachu">
+            <button id="searchBtn">Søk</button>
+            <div id="searchPreview" style="display:none; margin-top:10px;">
+                <img id="previewImg" src="" style="width:60px; height:60px;"><br>
+                <button id="confirmPicBtn">Bruk dette bildet</button>
             </div>
         </div>
-
-        <h3>Dine Toppscorer</h3>
-        <ul class="score-list" id="scoreList"></ul>
-        <p id="noScoresMsg" style="display:none; color: #888;">Ingen scorer ennå.</p>
-        <p id="notLoggedIn" style="display:none; color: red;">Du er ikke logget inn.</p>
-        
-        <br>
-        <a href="index.html" style="text-decoration: none; color: #007bff; font-weight: bold;">← Tilbake til spillet</a>
+        <hr>
+        <div>
+            <strong>Bytt brukernavn:</strong><br>
+            <input type="text" id="newUsernameInput" placeholder="Nytt navn...">
+            <button id="changeUsernameBtn">Lagre navn</button>
+        </div>
     </div>
-</main>
+
+    <hr>
+    <h3>Toppscorer</h3>
+    <ul id="scoreList" class="score-list"></ul>
+    <p id="noScoresMsg" style="display:none;">Ingen scorer ennå!</p>
+</div>
 
 <script src="profile.js"></script>
 </body>
