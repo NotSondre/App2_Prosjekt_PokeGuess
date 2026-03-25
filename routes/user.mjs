@@ -52,6 +52,36 @@ async function initDb() {
 }
 initDb();
 
+router.get('/profile', async (req, res) => {
+    const { username } = req.query;
+    if (!username) return res.status(400).json({ error: "Mangler brukernavn" });
+
+    try {
+        const userRes = await pool.query('SELECT profile_pic FROM users WHERE username = $1', [username.trim()]);
+        const scoreRes = await pool.query(
+            'SELECT score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 3',
+            [username.trim()]
+        );
+
+        res.json({ 
+            profilePic: userRes.rows[0]?.profile_pic || null,
+            topScores: scoreRes.rows 
+        });
+    } catch (err) {
+        res.status(500).json({ error: "Serverfeil ved henting av profil" });
+    }
+});
+
+router.post('/update-pic', async (req, res) => {
+    const { username, imageUrl } = req.body;
+    try {
+        await pool.query('UPDATE users SET profile_pic = $1 WHERE username = $2', [imageUrl, username.trim()]);
+        res.json({ message: "Bilde oppdatert!" });
+    } catch (err) {
+        res.status(500).json({ error: "Kunne ikke lagre bilde" });
+    }
+});
+
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
     
