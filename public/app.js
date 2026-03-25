@@ -9,7 +9,9 @@ const translations = {
         tos_error: "Du må godta vilkårene for å opprette bruker.",
         guess_correct: "Riktig! Det var ",
         guess_wrong: "Feil Pokémon, prøv igjen!",
-        it_was: "Det var "
+        it_was: "Det var ",
+        login_btn: "Logg Inn / Opprett",
+        profile_btn: "Profil: "
     },
     en: {
         network_error: "Network error: Could not reach the server.",
@@ -20,7 +22,9 @@ const translations = {
         tos_error: "You must accept the terms to create an account.",
         guess_correct: "Correct! It was ",
         guess_wrong: "Wrong Pokémon, try again!",
-        it_was: "It was "
+        it_was: "It was ",
+        login_btn: "Login / Register",
+        profile_btn: "Profile: "
     }
 };
 
@@ -31,6 +35,27 @@ const t = translations[userLang];
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
+
+// Oppdaterer knappen i headeren basert på innloggingsstatus
+function updateHeaderButton() {
+    const authBtn = document.getElementById('toggleLogin'); // Bruker ID fra index.html
+    const userMenu = document.getElementById('userMenu');
+    const username = localStorage.getItem('pokemon_user');
+
+    if (username) {
+        authBtn.innerText = `${t.profile_btn}${username}`;
+        authBtn.onclick = (e) => {
+            e.preventDefault();
+            window.location.href = 'Profile.html';
+        };
+    } else {
+        authBtn.innerText = t.login_btn;
+        authBtn.onclick = (e) => {
+            e.preventDefault();
+            userMenu.classList.toggle('active');
+        };
+    }
+}
 
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
@@ -52,7 +77,6 @@ async function request(endpoint, method = 'GET', data = null) {
     }
 }
 
-// Lagrer score til databasen hvis brukeren er logget inn og score > 0
 async function saveScore() {
     const username = localStorage.getItem('pokemon_user');
     if (!username || score <= 0) return;
@@ -131,6 +155,7 @@ class UserManager extends HTMLElement {
             
             if (this.mode === 'login') {
                 localStorage.setItem('pokemon_user', username);
+                updateHeaderButton(); 
                 setTimeout(() => {
                     this.parentElement.classList.remove('active');
                 }, 1500);
@@ -138,6 +163,7 @@ class UserManager extends HTMLElement {
 
             if (method === 'DELETE') {
                 localStorage.removeItem('pokemon_user');
+                updateHeaderButton(); 
             }
         }
     }
@@ -159,9 +185,7 @@ async function startNewGame(isSkip = false) {
     const regionSelect = document.getElementById('regionSelect');
     
     if (isSkip && img && !img.classList.contains('revealed')) {
-        // Lagre score før den nullstilles
         await saveScore();
-
         score = 0; 
         updateScoreDisplay();
         
@@ -190,17 +214,11 @@ async function startNewGame(isSkip = false) {
     
     if (data && !data.error) {
         const bildeUrl = data.imageUrl || data.image || data.url;
-        
         if (img && bildeUrl) {
             img.src = bildeUrl;
             currentPokemonName = data.name || data.pokemon || "Ukjent";
-            
-            img.onload = () => {
-                img.style.visibility = 'visible';
-            };
+            img.onload = () => { img.style.visibility = 'visible'; };
         }
-    } else {
-        console.error("Kunne ikke hente Pokémon-data:", data.error);
     }
 }
 
@@ -212,7 +230,8 @@ async function sendGuess() {
     if (!input || !input.value || (img && img.classList.contains('revealed'))) return;
 
     const data = await request('/content/guess', 'POST', { 
-        guess: input.value
+        guess: input.value,
+        correctAnswer: currentPokemonName
     });
 
     if (!resultDiv) return;
@@ -227,7 +246,6 @@ async function sendGuess() {
         
         score++; 
         updateScoreDisplay();
-
         setTimeout(() => startNewGame(false), 1500);
     } else {
         resultDiv.innerText = data.message || t.guess_wrong;
@@ -238,6 +256,8 @@ async function sendGuess() {
 // --- INITIALIZATION ---
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateHeaderButton(); 
+
     const guessBtn = document.getElementById('guessBtn');
     const nextBtn = document.getElementById('nextBtn');
     const pokemonInput = document.getElementById('pokemonInput');
