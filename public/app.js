@@ -35,9 +35,8 @@ const t = translations[userLang];
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
-let activeRegion = 'all'; // Standardvalg
+let activeRegion = 'all'; 
 
-// Oppdaterer knappen i headeren basert på innloggingsstatus
 function updateHeaderButton() {
     const authBtn = document.getElementById('authBtn'); 
     const username = localStorage.getItem('pokemon_user');
@@ -72,7 +71,6 @@ async function request(endpoint, method = 'GET', data = null) {
         }
         return await response.json();
     } catch (err) {
-        console.error("Fetch-feil:", err);
         return { error: t.network_error };
     }
 }
@@ -102,12 +100,10 @@ async function startNewGame(isSkip = false) {
         
         img.classList.add('revealed'); 
         img.style.display = 'block';
-        const nameToShow = currentPokemonName || "denne Pokémonen";
         if (resultDiv) {
-            resultDiv.innerText = `${t.it_was}${nameToShow}!`;
+            resultDiv.innerText = `${t.it_was}${currentPokemonName}!`;
             resultDiv.style.color = "orange";
         }
-
         setTimeout(() => startNewGame(false), 2000);
         return;
     }
@@ -120,17 +116,13 @@ async function startNewGame(isSkip = false) {
         img.src = "";
     }
 
-    // Her bruker vi den aktive regionen fra sidebaren
     const data = await request(`/content/pokemon?region=${activeRegion}&t=${Date.now()}`);
     
     if (data && !data.error) {
-        const bildeUrl = data.imageUrl || data.image || data.url;
-        if (img && bildeUrl) {
-            img.src = bildeUrl;
-            currentPokemonName = data.name || data.pokemon || "Ukjent";
-            img.onload = () => { 
-                img.style.display = 'block'; 
-            };
+        currentPokemonName = data.name || data.pokemon;
+        if (img) {
+            img.src = data.imageUrl || data.image || data.url;
+            img.onload = () => { img.style.display = 'block'; };
         }
     }
 }
@@ -147,17 +139,13 @@ async function sendGuess() {
         correctAnswer: currentPokemonName
     });
 
-    if (!resultDiv) return;
-
     if (data.success) {
         resultDiv.innerText = `${t.guess_correct}${currentPokemonName}!`; 
         resultDiv.style.color = "green";
         if (img) img.classList.add('revealed');
-        
         score++; 
         updateScoreDisplay();
         saveScore(); 
-
         setTimeout(() => startNewGame(false), 1500);
     } else {
         resultDiv.innerText = t.guess_wrong;
@@ -170,15 +158,18 @@ async function sendGuess() {
 document.addEventListener('DOMContentLoaded', () => {
     updateHeaderButton(); 
 
+    // VIKTIG: Sjekker region-knappene
     const regionButtons = document.querySelectorAll('.region-btn');
+    console.log("Fant antall region-knapper:", regionButtons.length);
+
     regionButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.onclick = () => {
+            console.log("Region-knapp klikket:", btn.getAttribute('data-region'));
             regionButtons.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            
             activeRegion = btn.getAttribute('data-region');
             startNewGame(false);
-        });
+        };
     });
 
     const guessBtn = document.getElementById('guessBtn');
@@ -189,9 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (nextBtn) nextBtn.onclick = () => startNewGame(true);
 
     if (pokemonInput) {
-        pokemonInput.addEventListener('keypress', (e) => {
+        pokemonInput.onkeypress = (e) => {
             if (e.key === 'Enter') sendGuess();
-        });
+        };
     }
 
     startNewGame();
@@ -200,12 +191,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('SW registrert'))
-        .catch(err => console.error('SW feilet', err));
 }
 
 if ('serviceWorker' in navigator) {
