@@ -3,96 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PokéGuess - Profil</title>
+    <title>Min Profil - PokéGuess</title>
     <style>
         body {
-            font-family: system-ui, sans-serif;
-            text-align: center;
-            margin: 0;
-            padding-top: 80px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2a75bb;
             background-image: url('Images/PokeGuess-Background.jpg');
             background-size: cover;
             background-attachment: fixed;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
 
-        .header {
-            position: fixed; top: 0; left: 0; right: 0;
-            height: 60px; background: #b2d0ec;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; z-index: 100;
-        }
-
-        .profile-box {
-            background: #fff;
-            border: 3px solid #000;
-            border-radius: 15px;
+        .profile-card {
+            background: white;
             padding: 30px;
-            display: inline-block;
-            min-width: 350px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            border: 3px solid #000;
         }
 
-        /* Piksel-art styling */
-        #currentPic, #previewImg {
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            background: #fdfdfd;
-            border: 2px solid #eee;
-            border-radius: 10px;
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid #ffcb05;
+            margin-bottom: 15px;
+            object-fit: cover;
+            background: #f0f0f0;
         }
 
-        .score-list { list-style: none; padding: 0; }
-        .score-list li {
-            display: flex; justify-content: space-between;
-            padding: 10px; border: 1px solid #ddd; margin-bottom: 5px;
+        h2 { margin: 10px 0; color: #333; }
+
+        .score-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .delete-score-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
             border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8rem;
         }
 
-        .search-area { margin: 15px 0; border-top: 1px solid #eee; padding-top: 15px; }
-        input { padding: 8px; border-radius: 5px; border: 1px solid #ccc; width: 150px; }
-        button { padding: 8px 12px; cursor: pointer; font-weight: bold; border-radius: 5px; border: none; }
-        #confirmPicBtn { background: #4CAF50; color: white; margin-top: 5px; }
-        #logoutBtn { background: #ff4444; color: white; }
-        button { cursor: pointer; padding: 8px 12px; border-radius: 5px; border: 1px solid #ccc; font-weight: bold; }
-        #editProfileBtn { background: #e0e0e0; margin-top: 10px; }
-        #confirmPicBtn, #changeUsernameBtn { background: #4CAF50; color: white; border: none; margin-top: 5px; }
+        .delete-score-btn:hover { background: #cc0000; }
+
+        .nav-btns {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-back { background: #2196F3; }
+        .btn-logout { background: #666; }
     </style>
 </head>
 <body>
 
-<header class="header">
-    <a href="index.html" style="font-weight: bold; text-decoration: none; color: #000;">← Spill</a>
-    <button id="logoutBtn" style="background: #ff4444; color: white; border: none;">Logg ut</button>
-</header>
-
-<div class="profile-box">
-    <img id="currentPic" src="" alt="Bilde" style="width: 100px; height: 100px;">
-    <h2 id="usernameDisplay">Laster...</h2>
+<div class="profile-card">
+    <img id="displayPic" class="profile-pic" src="" alt="Profilbilde">
+    <h2 id="displayUsername">Laster...</h2>
     
-    <button id="editProfileBtn">⚙️ Rediger profil</button>
-
-    <div id="editSection" class="edit-section" style="display: none;">
-        <div style="margin-bottom: 15px;">
-            <strong>Bytt bilde (Tast inn pokemon navn):</strong><br>
-            <input type="text" id="pokeSearch" placeholder="f.eks. pikachu">
-            <button id="searchBtn">Søk</button>
-            
-            <div id="searchPreview" style="display:none; margin-top:10px;">
-                <img id="previewImg" src="" style="width:60px; height:60px;"><br>
-                <button id="confirmPicBtn">Bruk dette bildet</button>
-            </div>
-        </div>
-        <hr>
-        <div>
-            <strong>Bytt brukernavn:</strong><br>
-            <input type="text" id="newUsernameInput" placeholder="Nytt navn...">
-            <button id="changeUsernameBtn">Lagre navn</button>
-        </div>
+    <div class="score-list">
+        <h3>Dine Toppnoteringer</h3>
+        <div id="scoreContainer">Laster poengsummer...</div>
     </div>
 
-    <hr>
-    <h3>Toppscorer</h3>
-    <ul id="scoreList" class="score-list"></ul>
-    <p id="noScoresMsg" style="display:none;">Ingen scorer ennå!</p>
+    <div class="nav-btns">
+        <a href="index.html" class="btn btn-back">Tilbake til spillet</a>
+        <button onclick="logout()" class="btn btn-logout">Logg ut</button>
+    </div>
 </div>
 
 <script src="profile.js"></script>
