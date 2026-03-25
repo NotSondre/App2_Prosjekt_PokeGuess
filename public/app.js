@@ -46,7 +46,7 @@ function updateHeaderButton() {
         authBtn.innerText = `${t.profile_btn}${username}`;
         authBtn.onclick = (e) => {
             e.preventDefault();
-            window.location.href = 'Profile.html';
+            window.location.href = 'profile.html';
         };
     } else {
         authBtn.innerText = t.login_btn;
