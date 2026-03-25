@@ -41,6 +41,24 @@
 
         h2 { margin: 10px 0; color: #333; }
 
+        /* Redigeringspanel */
+        #editPanel {
+            display: none;
+            margin: 15px 0;
+            padding: 15px;
+            background: #fdfdfd;
+            border: 2px dashed #ffcb05;
+            border-radius: 12px;
+        }
+
+        .edit-input {
+            width: 90%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
         .score-list {
             margin-top: 20px;
             text-align: left;
@@ -74,6 +92,7 @@
             display: flex;
             gap: 10px;
             justify-content: center;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -86,8 +105,10 @@
             color: white;
         }
 
+        .btn-edit { background: #ffcb05; color: #333; }
         .btn-back { background: #2196F3; }
         .btn-logout { background: #ff4444; }
+        .btn-save { background: #4CAF50; margin-top: 5px; width: 100%; }
     </style>
 </head>
 <body>
@@ -96,8 +117,16 @@
     <img id="displayPic" class="profile-pic" src="" alt="Profilbilde">
     <h2 id="displayUsername">Laster...</h2>
     
+    <button onclick="toggleEdit()" class="btn btn-edit">Rediger Profil</button>
+
+    <div id="editPanel">
+        <input type="text" id="newNameInput" class="edit-input" placeholder="Nytt brukernavn">
+        <input type="text" id="newPicInput" class="edit-input" placeholder="Bilde URL (f.eks. fra PokéAPI)">
+        <button onclick="saveProfileChanges()" class="btn btn-save">Lagre endringer</button>
+    </div>
+
     <div class="score-list">
-        <h3>Dine Toppnoteringer</h3>
+        <h3>Dine Topp 5 Noteringer</h3>
         <div id="scoreContainer">Laster poengsummer...</div>
     </div>
 
