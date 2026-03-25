@@ -246,6 +246,8 @@ async function sendGuess() {
         
         score++; 
         updateScoreDisplay();
+        saveScore(); 
+
         setTimeout(() => startNewGame(false), 1500);
     } else {
         resultDiv.innerText = data.message || t.guess_wrong;
