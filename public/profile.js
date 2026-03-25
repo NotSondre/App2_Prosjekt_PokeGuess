@@ -55,11 +55,8 @@ async function searchPokemon() {
     try {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
         if (!response.ok) throw new Error();
-        
         const data = await response.json();
-        
         selectedImageUrl = data.sprites.front_default;
-        
         status.style.display = "none";
         preview.src = selectedImageUrl;
         preview.style.display = "block";
@@ -77,6 +74,7 @@ async function saveProfileChanges() {
     const newPassword = document.getElementById('newPasswordInput').value;
     const oldName = localStorage.getItem('pokemon_user');
 
+    // 1. Navnebytte
     if (newName && newName !== oldName) {
         try {
             const res = await fetch(`${API_BASE}/user/update-username`, {
@@ -87,16 +85,15 @@ async function saveProfileChanges() {
             const data = await res.json();
             if (data.message) {
                 localStorage.setItem('pokemon_user', newName);
-                username = newName; // Oppdaterer lokal variabel
+                username = newName;
             } else {
                 alert(data.error);
                 return;
             }
-        } catch (err) {
-            console.error("Navnebytte feilet:", err);
-        }
+        } catch (err) { console.error("Navnebytte feilet:", err); }
     }
 
+    // 2. Bildeoppdatering
     if (selectedImageUrl) {
         try {
             await fetch(`${API_BASE}/user/update-pic`, {
@@ -104,15 +101,11 @@ async function saveProfileChanges() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), imageUrl: selectedImageUrl })
             });
-        } catch (err) {
-            console.error("Bildeoppdatering feilet:", err);
-        }
+        } catch (err) { console.error("Bildeoppdatering feilet:", err); }
     }
 
-    location.reload();
-}
-
-if (oldPassword && newPassword) {
+    // 3. Passordbytte (Nå inne i funksjonen!)
+    if (oldPassword && newPassword) {
         try {
             const res = await fetch(`${API_BASE}/user/update-password`, {
                 method: 'POST',
@@ -126,11 +119,9 @@ if (oldPassword && newPassword) {
             const data = await res.json();
             if (!data.message) {
                 alert("Passordfeil: " + data.error);
-                return; // Stopper reload hvis passordbytte feilet
+                return;
             }
-        } catch (err) {
-            console.error("Passordbytte feilet:", err);
-        }
+        } catch (err) { console.error("Passordbytte feilet:", err); }
     }
 
     location.reload();
@@ -138,18 +129,13 @@ if (oldPassword && newPassword) {
 
 async function deleteScore(scoreId) {
     if (!confirm("Vil du slette denne rekorden?")) return;
-
     try {
         const response = await fetch(`${API_BASE}/user/score/${scoreId}?username=${username}`, {
             method: 'DELETE'
         });
         const result = await response.json();
-        if (result.message) {
-            loadProfile();
-        }
-    } catch (err) {
-        console.error("Sletting feilet:", err);
-    }
+        if (result.message) loadProfile();
+    } catch (err) { console.error("Sletting feilet:", err); }
 }
 
 function toggleEdit() {
@@ -162,6 +148,7 @@ function logout() {
     window.location.href = 'login.html';
 }
 
+// Global eksponering for onclick
 window.toggleEdit = toggleEdit;
 window.searchPokemon = searchPokemon;
 window.saveProfileChanges = saveProfileChanges;

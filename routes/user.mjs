@@ -40,7 +40,7 @@ async function initDb() {
 }
 initDb();
 
-// --- PROFIL-RUTER ---
+// --- PROFIL-RUTER (GET) ---
 
 router.get('/profile', async (req, res) => {
     const { username } = req.query;
@@ -63,29 +63,23 @@ router.get('/profile', async (req, res) => {
     }
 });
 
-router.post('/score', async (req, res) => {
-    const { username, score } = req.body;
-    if (!username || score === undefined || score <= 0) return res.json({ message: "Ugyldig score." });
+// --- OPPDATERINGS-RUTER (POST) ---
+
+// NY: Oppdater brukernavn (oppdaterer begge tabeller)
+router.post('/update-username', async (req, res) => {
+    const { oldName, newName } = req.body;
+    if (!oldName || !newName) return res.status(400).json({ error: "Mangler navn." });
 
     try {
-        await pool.query('INSERT INTO scores (username, score) VALUES ($1, $2)', [username.trim(), score]);
-        res.json({ success: true });
+        const check = await pool.query('SELECT username FROM users WHERE username = $1', [newName.trim()]);
+        if (check.rows.length > 0) return res.status(400).json({ error: "Navnet er tatt" });
+
+        await pool.query('UPDATE users SET username = $1 WHERE username = $2', [newName.trim(), oldName.trim()]);
+        await pool.query('UPDATE scores SET username = $1 WHERE username = $2', [newName.trim(), oldName.trim()]);
+        
+        res.json({ message: "Navn oppdatert" });
     } catch (err) {
-        res.status(500).json({ error: "Kunne ikke lagre score" });
-    }
-});
-
-router.delete('/score/:id', async (req, res) => {
-    const { id } = req.params;
-    const { username } = req.query;
-
-    if (!username) return res.status(400).json({ error: "Brukernavn mangler" });
-
-    try {
-        await pool.query('DELETE FROM scores WHERE id = $1 AND username = $2', [id, username.trim()]);
-        res.json({ message: "Slettet" });
-    } catch (err) {
-        res.status(500).json({ error: "Feil ved sletting" });
+        res.status(500).json({ error: "Kunne ikke endre navn" });
     }
 });
 
@@ -101,25 +95,50 @@ router.post('/update-pic', async (req, res) => {
 
 router.post('/update-password', async (req, res) => {
     const { username, oldPassword, newPassword } = req.body;
-
     try {
-        // Hent brukeren fra databasen
-        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username]);
+        const result = await pool.query('SELECT password FROM users WHERE username = $1', [username.trim()]);
         if (result.rows.length === 0) return res.status(404).json({ error: "Bruker ikke funnet" });
 
-        // Sjekk om gammelt passord er korrekt
-        const match = await bcrypt.compare(oldPassword, result.rows[0].password);
+        const match = await bcrypt.compare(oldPassword.trim(), result.rows[0].password);
         if (!match) return res.status(401).json({ error: "Gammelt passord er feil" });
 
-        // Hash det nye passordet og lagre
-        const hashedNewPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
-        await pool.query('UPDATE users SET password = $1 WHERE username = $2', [hashedNewPassword, username]);
+        const hashedNewPassword = await bcrypt.hash(newPassword.trim(), SALT_ROUNDS);
+        await pool.query('UPDATE users SET password = $1 WHERE username = $2', [hashedNewPassword, username.trim()]);
 
         res.json({ message: "Passord oppdatert" });
     } catch (err) {
         res.status(500).json({ error: "Serverfeil ved oppdatering av passord" });
     }
 });
+
+// --- SCORE-RUTER ---
+
+router.post('/score', async (req, res) => {
+    const { username, score } = req.body;
+    if (!username || score === undefined || score <= 0) return res.json({ message: "Ugyldig score." });
+
+    try {
+        await pool.query('INSERT INTO scores (username, score) VALUES ($1, $2)', [username.trim(), score]);
+        res.json({ success: true, message: "Score lagret!" });
+    } catch (err) {
+        res.status(500).json({ error: "Kunne ikke lagre score" });
+    }
+});
+
+router.delete('/score/:id', async (req, res) => {
+    const { id } = req.params;
+    const { username } = req.query;
+    if (!username) return res.status(400).json({ error: "Brukernavn mangler" });
+
+    try {
+        await pool.query('DELETE FROM scores WHERE id = $1 AND username = $2', [id, username.trim()]);
+        res.json({ message: "Slettet" });
+    } catch (err) {
+        res.status(500).json({ error: "Feil ved sletting" });
+    }
+});
+
+// --- AUTH-RUTER (Register, Login, Delete) ---
 
 router.post('/register', async (req, res) => {
     const { username, password, consent } = req.body;
@@ -155,20 +174,6 @@ router.post('/login', async (req, res) => {
         res.status(500).json({ error: "Feil ved innlogging" });
     }
 });
-
-
-router.post('/score', async (req, res) => {
-    const { username, score } = req.body;
-    if (!username || score === undefined || score <= 0) return res.json({ message: "Ingen score lagret." });
-
-    try {
-        await pool.query('INSERT INTO scores (username, score) VALUES ($1, $2)', [username.trim(), score]);
-        res.json({ message: "Score lagret!" });
-    } catch (err) {
-        res.status(500).json({ error: "Serverfeil ved lagring." });
-    }
-});
-
 
 router.delete('/delete', async (req, res) => {
     const { username, password } = req.body;
