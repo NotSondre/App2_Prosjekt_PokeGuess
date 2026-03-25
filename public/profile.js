@@ -45,18 +45,24 @@ async function searchPokemon() {
     const status = document.getElementById('searchStatus');
     const preview = document.getElementById('previewPic');
     const nameLabel = document.getElementById('previewName');
+    const previewPanel = document.getElementById('searchPreview'); 
 
     if (!input) return;
 
+    previewPanel.style.display = "flex";
     status.innerText = "Søker...";
+    status.style.display = "block";
     preview.style.display = "none";
     nameLabel.innerText = "";
 
     try {
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${input}`);
         if (!response.ok) throw new Error();
+        
         const data = await response.json();
+        
         selectedImageUrl = data.sprites.front_default;
+        
         status.style.display = "none";
         preview.src = selectedImageUrl;
         preview.style.display = "block";
@@ -64,6 +70,7 @@ async function searchPokemon() {
     } catch (err) {
         status.innerText = "Fant ikke Pokémon. Prøv navn eller ID.";
         status.style.display = "block";
+        preview.style.display = "none";
         selectedImageUrl = null;
     }
 }
