@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokéGuess - Profil</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding-top: 80px;
+            background-color: #f4f4f4;
+            background-image: url('Images/PokeGuess-Background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            color: #000;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: 60px; background: #000; color: #fff;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; z-index: 100;
+        }
+
+        .header a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .header a:hover { text-decoration: underline; }
+
+        .profile-box {
+            background: #fff;
+            border: 3px solid #000;
+            border-radius: 15px;
+            padding: 30px;
+            display: inline-block;
+            min-width: 320px;
+            margin-top: 20px;
+        }
+
+        h1 { margin-bottom: 5px; }
+        .username { font-size: 1.2rem; color: #555; margin-bottom: 25px; }
+
+        .score-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .score-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border: 2px solid #000;
+            border-radius: 8px;
+            font-size: 1.1rem;
+        }
+
+        .score-list li:first-child { background: #fff9e6; border-color: #f0c040; }
+        .score-list li:nth-child(2) { background: #f5f5f5; border-color: #aaa; }
+        .score-list li:nth-child(3) { background: #fff0e6; border-color: #c87941; }
+
+        .rank { font-size: 1.4rem; }
+        .points { font-weight: bold; font-size: 1.3rem; }
+        .date { font-size: 0.8rem; color: #888; }
+
+        .no-scores { color: #888; font-style: italic; margin-top: 20px; }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 25px;
+            background: #000;
+            color: #fff;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .back-btn:hover { background: #333; }
+
+        .not-logged-in { color: #888; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <img src="Images/Poke-Guessr_Logo.png" alt="PokéGuess" style="height: 45px;">
+        <a href="index.html">← Tilbake til spillet</a>
+    </header>
+
+    <main>
+        <div class="profile-box">
+            <h1>Min Profil</h1>
+            <div class="username" id="usernameDisplay"></div>
+            <ul class="score-list" id="scoreList"></ul>
+            <p class="no-scores" id="noScoresMsg" style="display:none;">Ingen scorer lagret ennå. Spill et spill!</p>
+            <p class="not-logged-in" id="notLoggedIn" style="display:none;">Du er ikke logget inn.</p>
+            <a href="index.html" class="back-btn">Spill nå</a>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'https://poke-guessr.onrender.com';
+        const medals = ['🥇', '🥈', '🥉'];
+
+        async function loadProfile() {
+            const username = localStorage.getItem('pokemon_user');
+            const notLoggedIn = document.getElementById('notLoggedIn');
+            const usernameDisplay = document.getElementById('usernameDisplay');
+            const scoreList = document.getElementById('scoreList');
+            const noScoresMsg = document.getElementById('noScoresMsg');
+
+            if (!username) {
+                notLoggedIn.style.display = 'block';
+                return;
+            }
+
+            usernameDisplay.innerText = username;
+
+            const res = await fetch(`${API_BASE}/user/profile?username=${encodeURIComponent(username)}`);
+            const data = await res.json();
+
+            if (!data.topScores || data.topScores.length === 0) {
+                noScoresMsg.style.display = 'block';
+                return;
+            }
+
+            data.topScores.forEach((entry, i) => {
+                const date = new Date(entry.played_at).toLocaleDateString('no-NO');
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="rank">${medals[i]}</span>
+                    <span class="points">${entry.score} poeng</span>
+                    <span class="date">${date}</span>
+                `;
+                scoreList.appendChild(li);
+            });
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

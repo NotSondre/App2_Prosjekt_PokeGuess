@@ -13,7 +13,6 @@ const pool = new Pool({
     }
 });
 
-
 async function initDb() {
     try {
         await pool.query(`
@@ -36,7 +35,17 @@ async function initDb() {
             END $$;
         `);
 
-        console.log("Database initialisert: Tabellen users er klar.");
+        // Tabell for individuelle spilløkter
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS scores (
+                id SERIAL PRIMARY KEY,
+                username TEXT NOT NULL,
+                score INTEGER NOT NULL,
+                played_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+
+        console.log("Database initialisert: Tabellene users og scores er klare.");
     } catch (err) {
         console.error("Kritisk feil ved initialisering av database:", err.message);
     }
@@ -149,6 +158,7 @@ router.delete('/delete', async (req, res) => {
             return res.status(401).json({ error: "Fant ikke brukeren eller feil passord." });
         }
 
+        await pool.query('DELETE FROM scores WHERE username = $1', [cleanUser]);
         await pool.query('DELETE FROM users WHERE username = $1', [cleanUser]);
 
         console.log("Slettet bruker:", username);
@@ -157,6 +167,50 @@ router.delete('/delete', async (req, res) => {
     } catch (err) {
         console.error("Databasefeil ved sletting:", err.message);
         res.status(500).json({ error: "Serverfeil ved sletting." });
+    }
+});
+
+// Lagrer en spilløkt når brukeren er ferdig (score > 0)
+router.post('/score', async (req, res) => {
+    const { username, score } = req.body;
+
+    if (!username || score === undefined) {
+        return res.status(400).json({ error: "Mangler brukernavn eller poengsum." });
+    }
+
+    if (score <= 0) {
+        return res.json({ message: "Score på 0 lagres ikke." });
+    }
+
+    try {
+        await pool.query(
+            'INSERT INTO scores (username, score) VALUES ($1, $2)',
+            [username.trim(), score]
+        );
+        res.json({ message: "Score lagret!" });
+    } catch (err) {
+        console.error("Databasefeil ved score-lagring:", err.message);
+        res.status(500).json({ error: "Serverfeil ved score-lagring." });
+    }
+});
+
+// Henter brukerens topp 3 scorer
+router.get('/profile', async (req, res) => {
+    const { username } = req.query;
+
+    if (!username) {
+        return res.status(400).json({ error: "Mangler brukernavn." });
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 3',
+            [username.trim()]
+        );
+        res.json({ topScores: result.rows });
+    } catch (err) {
+        console.error("Databasefeil ved henting av profil:", err.message);
+        res.status(500).json({ error: "Serverfeil ved henting av profil." });
     }
 });
 

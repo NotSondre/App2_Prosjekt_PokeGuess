@@ -32,9 +32,6 @@ const API_BASE = 'https://poke-guessr.onrender.com';
 let score = 0; 
 let currentPokemonName = ""; 
 
-/**
- * Generisk funksjon for API-kall med feilhåndtering
- */
 async function request(endpoint, method = 'GET', data = null) {
     const options = {
         method: method,
@@ -53,6 +50,13 @@ async function request(endpoint, method = 'GET', data = null) {
         console.error("Fetch-feil:", err);
         return { error: t.network_error };
     }
+}
+
+// Lagrer score til databasen hvis brukeren er logget inn og score > 0
+async function saveScore() {
+    const username = localStorage.getItem('pokemon_user');
+    if (!username || score <= 0) return;
+    await request('/user/score', 'POST', { username, score });
 }
 
 // --- USER MANAGER COMPONENT ---
@@ -131,6 +135,10 @@ class UserManager extends HTMLElement {
                     this.parentElement.classList.remove('active');
                 }, 1500);
             }
+
+            if (method === 'DELETE') {
+                localStorage.removeItem('pokemon_user');
+            }
         }
     }
 }
@@ -144,17 +152,16 @@ function updateScoreDisplay() {
     if (scoreElement) scoreElement.innerText = score;
 }
 
-/**
- * Henter ny Pokémon og styrer visning av bilder
- */
 async function startNewGame(isSkip = false) {
     const img = document.getElementById('pokemonImage');
     const resultDiv = document.getElementById('guessResult');
     const input = document.getElementById('pokemonInput');
     const regionSelect = document.getElementById('regionSelect');
     
-    // Håndter "Vet Ikke" (Skip)
     if (isSkip && img && !img.classList.contains('revealed')) {
+        // Lagre score før den nullstilles
+        await saveScore();
+
         score = 0; 
         updateScoreDisplay();
         
@@ -170,7 +177,6 @@ async function startNewGame(isSkip = false) {
         return;
     }
 
-    // Nullstill UI for ny runde
     if (input) { input.value = ""; input.focus(); }
     if (resultDiv) resultDiv.innerText = "";
     if (img) {
@@ -179,13 +185,9 @@ async function startNewGame(isSkip = false) {
         img.src = "";
     }
 
-    // --- NY LOGIKK FOR REGION ---
     const selectedRegion = regionSelect ? regionSelect.value : 'all';
-    
     const data = await request(`/content/pokemon?region=${selectedRegion}&t=${Date.now()}`);
     
-    console.log("Pokémon data mottatt for region:", selectedRegion, data);
-
     if (data && !data.error) {
         const bildeUrl = data.imageUrl || data.image || data.url;
         
@@ -202,9 +204,6 @@ async function startNewGame(isSkip = false) {
     }
 }
 
-/**
- Sender gjett til serveren
- */
 async function sendGuess() {
     const input = document.getElementById('pokemonInput');
     const resultDiv = document.getElementById('guessResult');
