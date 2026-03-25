@@ -25,21 +25,6 @@ async function initDb() {
             );
         `);
 
-        const cols = [
-            { name: 'consented', type: 'BOOLEAN DEFAULT TRUE' },
-            { name: 'profile_pic', type: "TEXT DEFAULT 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png'" }
-        ];
-
-        for (const col of cols) {
-            await pool.query(`
-                DO $$ BEGIN 
-                    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='${col.name}') THEN
-                        ALTER TABLE users ADD COLUMN ${col.name} ${col.type};
-                    END IF;
-                END $$;
-            `);
-        }
-
         await pool.query(`
             CREATE TABLE IF NOT EXISTS scores (
                 id SERIAL PRIMARY KEY,
@@ -48,15 +33,14 @@ async function initDb() {
                 played_at TIMESTAMP DEFAULT NOW()
             );
         `);
-        
-        console.log("✅ Database initialisert OK");
+        console.log("Database initialisert.");
     } catch (err) {
-        console.error("❌ DB Init feil:", err.message);
+        console.error("DB Init feil:", err.message);
     }
 }
 initDb();
 
-// --- RUTER ---
+// --- PROFIL-RUTER ---
 
 router.get('/profile', async (req, res) => {
     const { username } = req.query;
@@ -64,27 +48,29 @@ router.get('/profile', async (req, res) => {
     
     try {
         const userRes = await pool.query('SELECT profile_pic FROM users WHERE username = $1', [username.trim()]);
-        const scoreRes = await pool.query('SELECT id, score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 10', [username.trim()]);
+        
+        const scoreRes = await pool.query(
+            'SELECT id, score, played_at FROM scores WHERE username = $1 ORDER BY score DESC LIMIT 5', 
+            [username.trim()]
+        );
         
         res.json({ 
             profilePic: userRes.rows[0]?.profile_pic || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png', 
             topScores: scoreRes.rows 
         });
     } catch (err) {
-        console.error("Profilfeil:", err);
         res.status(500).json({ error: "Serverfeil ved henting av profil" });
     }
 });
 
 router.post('/score', async (req, res) => {
     const { username, score } = req.body;
-    if (!username || score === undefined || score <= 0) return res.json({ message: "Ingen score lagret." });
+    if (!username || score === undefined || score <= 0) return res.json({ message: "Ugyldig score." });
 
     try {
         await pool.query('INSERT INTO scores (username, score) VALUES ($1, $2)', [username.trim(), score]);
-        res.json({ success: true, message: "Score lagret!" });
+        res.json({ success: true });
     } catch (err) {
-        console.error("Score lagringsfeil:", err);
         res.status(500).json({ error: "Kunne ikke lagre score" });
     }
 });
@@ -96,14 +82,10 @@ router.delete('/score/:id', async (req, res) => {
     if (!username) return res.status(400).json({ error: "Brukernavn mangler" });
 
     try {
-        const result = await pool.query(
-            'DELETE FROM scores WHERE id = $1 AND username = $2',
-            [id, username.trim()]
-        );
-        if (result.rowCount === 0) return res.status(404).json({ error: "Score ikke funnet" });
-        res.json({ message: "Score slettet" });
+        await pool.query('DELETE FROM scores WHERE id = $1 AND username = $2', [id, username.trim()]);
+        res.json({ message: "Slettet" });
     } catch (err) {
-        res.status(500).json({ error: "Kunne ikke slette score" });
+        res.status(500).json({ error: "Feil ved sletting" });
     }
 });
 
