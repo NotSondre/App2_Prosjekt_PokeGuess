@@ -1,8 +1,8 @@
 // --- Konfigurasjon og Tilstand ---
 const API_BASE = 'https://poke-guessr.onrender.com';
 let mode = 'login'; 
-// --- Grensesnitt-logikk ---
 
+// --- Grensesnitt-logikk ---
 function switchTab(newMode) {
     mode = newMode;
     const loginTab = document.getElementById('loginTab');

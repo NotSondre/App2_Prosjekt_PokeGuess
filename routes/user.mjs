@@ -51,7 +51,7 @@ router.delete('/score/:id', async (req, res, next) => {
     }
 });
 
-// --- 3. AUTENTISERING (LOGIN) ---
+// --- 3. AUTENTISERING (LOGIN & REGISTER) ---
 router.post('/login', async (req, res, next) => {
     const { username, password } = req.body;
     try {
@@ -62,6 +62,26 @@ router.post('/login', async (req, res, next) => {
         if (!match) return res.status(401).json({ error: "Feil bruker/passord" });
 
         res.json({ message: "OK", user: { name: user.username } });
+    } catch (err) {
+        next(err);
+    }
+});
+
+router.post('/register', async (req, res, next) => {
+    const { username, password, consent } = req.body;
+    if (!username || !password) return res.status(400).json({ error: "Mangler brukernavn eller passord" });
+    if (!consent) return res.status(400).json({ error: "Du må godta vilkårene" });
+
+    try {
+        const existing = await db.getUserByUsername(username.trim());
+        if (existing) return res.status(409).json({ error: "Brukernavnet er allerede i bruk" });
+
+        const hashed = await bcrypt.hash(password.trim(), SALT_ROUNDS);
+        await db.query(
+            'INSERT INTO users (username, password) VALUES ($1, $2)',
+            [username.trim(), hashed]
+        );
+        res.status(201).json({ message: "Bruker opprettet!" });
     } catch (err) {
         next(err);
     }
