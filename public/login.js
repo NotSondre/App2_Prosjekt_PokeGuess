@@ -20,7 +20,7 @@ function switchTab(newMode) {
     
     if (submitBtn) {
         submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
-        submitBtn.disabled = false; 
+        submitBtn.disabled = false;
     }
      
     errorMsg.innerText = ''; 
@@ -41,6 +41,7 @@ async function handleAuth() {
         errorMsg.innerText = "Fyll inn alle felt!";
         return;
     }
+
     submitBtn.disabled = true;
     const originalBtnText = submitBtn.innerText;
     submitBtn.innerText = "Vent litt...";
@@ -68,26 +69,20 @@ async function handleAuth() {
         const data = await response.json();
 
         if (response.ok) {
-            if (mode === 'login') {
-                localStorage.setItem('pokemon_user', data.user.name);
-                window.location.href = 'profile.html'; 
-            } else {
-                alert("Bruker opprettet! Du kan nå logge inn.");
-                mode = 'login';
-                switchTab('login');
-                if (passwordInput) passwordInput.value = ''; 
-            }
+            localStorage.setItem('pokemon_user', username);
+            
+            window.location.href = 'profile.html'; 
+            
         } else {
             errorMsg.innerText = data.error || "Noe gikk galt.";
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
         }
     } catch (err) {
         errorMsg.innerText = "Kunne ikke koble til serveren.";
         console.error("Fetch feil:", err);
-    } finally {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
-        }
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalBtnText;
     }
 }
 
