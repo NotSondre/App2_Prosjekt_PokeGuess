@@ -13,7 +13,7 @@ function switchTab(newMode) {
     if (registerTab) registerTab.classList.toggle('active', mode === 'register');
     if (registerOnly) registerOnly.style.display = mode === 'register' ? 'block' : 'none';
     if (submitBtn) submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
-    
+     
     errorMsg.innerText = '';
 }
 
