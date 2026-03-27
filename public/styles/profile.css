@@ -1,0 +1,133 @@
+/* ================================
+   GENERELT / BODY
+================================ */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #2a75bb;
+    background-image: url('../Images/PokeGuess-Background.jpg');
+    background-size: cover;
+    background-attachment: fixed;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 0;
+    min-height: 100vh;
+}
+
+/* ================================
+   PROFILKORT OG SLETT-KONTO-KORT
+================================ */
+.profile-card, .delete-account-card {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 500px;
+    border: 3px solid #000;
+    text-align: center;
+}
+
+.delete-account-card {
+    margin-top: 20px;
+    border-color: #ff4444;
+    padding: 20px;
+}
+
+.danger-title {
+    color: #ff4444;
+    margin: 0 0 10px 0;
+}
+
+/* ================================
+   PROFILBILDE
+================================ */
+.profile-pic {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #ffcb05;
+    margin-bottom: 15px;
+    object-fit: contain;
+    background: #f0f0f0;
+    image-rendering: pixelated;
+}
+
+/* ================================
+   REDIGERINGSPANEL
+================================ */
+#editPanel {
+    display: none;
+    margin: 15px 0;
+    padding: 20px;
+    background: #fdfdfd;
+    border: 2px dashed #ffcb05;
+    border-radius: 12px;
+    text-align: left;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+#searchPreview {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+    min-height: 120px;
+    border: 1px solid #eee;
+}
+
+/* ================================
+   POENGSCORER
+================================ */
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+}
+
+/* ================================
+   KNAPPER
+================================ */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    text-decoration: none;
+    color: white;
+    display: inline-block;
+}
+
+.btn-edit   { background: #ffcb05; color: #333; }
+.btn-back   { background: #2196F3; }
+.btn-logout { background: #ff4444; }
+.btn-save   { background: #4CAF50; width: 100%; margin-top: 10px; }
+.btn-search { background: #333; margin-bottom: 10px; width: 100%; }
+.btn-danger { background: #ff4444; width: 100%; margin-top: 10px; }
+
+/* ================================
+   DIVERSE
+================================ */
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 20px 0;
+}

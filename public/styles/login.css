@@ -1,0 +1,118 @@
+/* ================================
+   GENERELT / BODY
+================================ */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #2a75bb url('../Images/PokeGuess-Background.jpg') no-repeat center center fixed;
+    background-size: cover;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* ================================
+   AUTH-KORT
+================================ */
+.auth-container {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 400px;
+    border: 3px solid #000;
+    text-align: center;
+}
+
+/* ================================
+   TABS (LOGG INN / REGISTRER)
+================================ */
+.tabs {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+}
+
+.tab {
+    flex: 1;
+    padding: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #666;
+}
+
+.tab.active {
+    color: #2a75bb;
+    border-bottom: 3px solid #ffcb05;
+}
+
+/* ================================
+   SKJEMA
+================================ */
+.form-group {
+    margin-bottom: 15px;
+    text-align: left;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    box-sizing: border-box;
+    font-size: 1rem;
+}
+
+input:focus {
+    border-color: #2a75bb;
+    outline: none;
+}
+
+/* ================================
+   KNAPPER
+================================ */
+.btn-auth {
+    width: 100%;
+    padding: 12px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.btn-auth:hover { opacity: 0.9; }
+
+/* ================================
+   FEILMELDING
+================================ */
+#errorMessage {
+    color: #ff4444;
+    font-weight: bold;
+    margin-top: 10px;
+    min-height: 20px;
+}
+
+/* ================================
+   SAMTYKKE (REGISTRERING)
+================================ */
+.consent-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    margin-top: 10px;
+}
+
+.consent-box input { width: auto; }
