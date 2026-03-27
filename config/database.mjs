@@ -10,7 +10,6 @@ const pool = new Pool({
 // ---------- Oppstart og tabeller ----------
 export async function initDb() {
     try {
-        await pool.query(`DROP TABLE IF EXISTS users CASCADE;`);
 
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
