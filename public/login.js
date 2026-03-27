@@ -1,5 +1,7 @@
+// --- Konfigurasjon og Tilstand ---
 const API_BASE = 'https://poke-guessr.onrender.com';
-let mode = 'login';
+let mode = 'login'; 
+// --- Grensesnitt-logikk ---
 
 function switchTab(newMode) {
     mode = newMode;
@@ -14,9 +16,10 @@ function switchTab(newMode) {
     if (registerOnly) registerOnly.style.display = mode === 'register' ? 'block' : 'none';
     if (submitBtn) submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
      
-    errorMsg.innerText = '';
+    errorMsg.innerText = ''; 
 }
 
+// --- Autentiserings-logikk ---
 async function handleAuth() {
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
@@ -71,6 +74,7 @@ async function handleAuth() {
 window.switchTab = switchTab;
 window.handleAuth = handleAuth;
 
+// --- Oppstart ---
 document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) {

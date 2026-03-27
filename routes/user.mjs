@@ -2,11 +2,11 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import { db, initDb } from '../config/database.mjs';
 const router = express.Router();
-const SALT_ROUNDS = 12;
+const SALT_ROUNDS = 12; 
 
 initDb(); 
 
-// --- PROFIL ---
+// --- 1. PROFIL & INFORMASJON ---
 router.get('/profile', async (req, res, next) => {
     const { username } = req.query;
     if (!username) return res.status(400).json({ error: "Mangler brukernavn" });
@@ -24,7 +24,7 @@ router.get('/profile', async (req, res, next) => {
     }
 });
 
-// --- SCORE ---
+// --- 2. POENGSUM-HÅNDTERING (SCORE) ---
 router.post('/score', async (req, res, next) => {
     const { username, score } = req.body;
     if (!username || score === undefined || score <= 0) return res.json({ message: "Ugyldig score." });
@@ -51,7 +51,7 @@ router.delete('/score/:id', async (req, res, next) => {
     }
 });
 
-// --- AUTH ---
+// --- 3. AUTENTISERING (LOGIN) ---
 router.post('/login', async (req, res, next) => {
     const { username, password } = req.body;
     try {
@@ -67,7 +67,7 @@ router.post('/login', async (req, res, next) => {
     }
 });
 
-// --- OPPDATER BRUKERNAVN ---
+// --- 4. BRUKERADMINISTRASJON (OPPDATERINGER) ---
 router.post('/update-username', async (req, res, next) => {
     const { oldName, newName } = req.body;
     if (!oldName || !newName) return res.status(400).json({ error: "Mangler data" });
@@ -81,7 +81,6 @@ router.post('/update-username', async (req, res, next) => {
     }
 });
 
-// --- OPPDATER PROFILBILDE ---
 router.post('/update-pic', async (req, res, next) => {
     const { username, imageUrl } = req.body;
     if (!username || !imageUrl) return res.status(400).json({ error: "Mangler data" });
@@ -94,7 +93,6 @@ router.post('/update-pic', async (req, res, next) => {
     }
 });
 
-// --- OPPDATER PASSORD ---
 router.post('/update-password', async (req, res, next) => {
     const { username, oldPassword, newPassword } = req.body;
     if (!username || !oldPassword || !newPassword) return res.status(400).json({ error: "Mangler data" });
@@ -114,7 +112,7 @@ router.post('/update-password', async (req, res, next) => {
     }
 });
 
-// --- SLETT KONTO ---
+// --- 5. KONTOSLETTING ---
 router.delete('/delete', async (req, res, next) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).json({ error: "Mangler data" });

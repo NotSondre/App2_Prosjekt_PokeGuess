@@ -1,3 +1,4 @@
+// --- 1. KONFIGURASJON & OPPSOPP ---
 import express from 'express';
 import { cleanGuess } from '../middleware/CleanGuess.mjs'; 
 
@@ -6,6 +7,7 @@ const router = express.Router();
 let usedIds = []; 
 const MAX_HISTORY = 20; 
 
+// --- 2. RUTE: HENT POKÉMON ---
 router.get('/pokemon', async (req, res, next) => {
     try {
         const region = req.query.region || 'all';
@@ -32,7 +34,6 @@ router.get('/pokemon', async (req, res, next) => {
         if (!response.ok) throw new Error("Kunne ikke hente data fra PokéAPI");
 
         const data = await response.json();
-        
         const pokemonName = data.name.replace(/-/g, ' ').toLowerCase().trim(); 
         
         res.json({ 
@@ -41,10 +42,11 @@ router.get('/pokemon', async (req, res, next) => {
             name: pokemonName 
         });
     } catch (err) {
-        next(err);
+        next(err); 
     }
 });
 
+// --- 3. RUTE: SJEKK GJETING ---
 router.post('/guess', cleanGuess, (req, res, next) => {
     try {
         const { guess, correctAnswer } = req.body; 

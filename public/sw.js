@@ -1,3 +1,4 @@
+// --- 1. KONFIGURASJON ---
 const CACHE_NAME = 'pokeguess-cache-v5'; 
 const urlsToCache = [
   '/',
@@ -6,6 +7,7 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
+// --- 2. INSTALLASJON ---
 self.addEventListener('install', event => {
   self.skipWaiting(); 
   event.waitUntil(
@@ -16,6 +18,7 @@ self.addEventListener('install', event => {
   );
 });
 
+// --- 3. AKTIVERING ---
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -31,6 +34,7 @@ self.addEventListener('activate', event => {
   );
 });
 
+// --- 4. NETTVERKSHÅNDTERING (FETCH) ---
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 

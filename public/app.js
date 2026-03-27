@@ -1,4 +1,4 @@
-// --- I18n (Internationalization) ---
+// --- 1. SPRÅK & OVERSETTELSER ---
 const translations = {
     no: {
         network_error: "Nettverksfeil: Kunne ikke kontakte serveren.",
@@ -31,12 +31,12 @@ const translations = {
 const userLang = navigator.language.startsWith('nb') || navigator.language.startsWith('no') ? 'no' : 'en';
 const t = translations[userLang];
 
-// --- DATA & LOGIC ---
+// --- 2. GLOBAL TILSTAND & API-KOMMUNIKASJON ---
 const API_BASE = 'https://poke-guessr.onrender.com'; 
 let score = 0; 
 let currentPokemonName = ""; 
 let activeRegion = 'all'; 
-let isProcessing = false; // Sperre for å hindre doble kall
+let isProcessing = false; 
 
 function updateHeaderButton() {
     const authBtn = document.getElementById('authBtn'); 
@@ -78,14 +78,11 @@ async function request(endpoint, method = 'GET', data = null) {
 
 async function saveScore() {
     const username = localStorage.getItem('pokemon_user');
-    
     if (!username || score <= 0) return;
 
     const finalScore = score; 
     score = 0;              
     updateScoreDisplay();    
-
-    console.log("Sender endelig poengsum til server:", finalScore);
 
     await request('/user/score', 'POST', { 
         username: username, 
@@ -93,8 +90,7 @@ async function saveScore() {
     });
 }
 
-// --- GAME LOGIC ---
-
+// --- 3. SPILL-LOGIKK ---
 function updateScoreDisplay() {
     const scoreElement = document.getElementById('currentScore');
     if (scoreElement) scoreElement.innerText = score;
@@ -141,9 +137,7 @@ async function startNewGame(isSkip = false) {
         currentPokemonName = data.name || data.pokemon;
         if (img) {
             img.src = data.imageUrl || data.image || data.url;
-            img.onload = () => { 
-                img.style.display = 'block'; 
-            };
+            img.onload = () => { img.style.display = 'block'; };
         }
     }
 }
@@ -184,13 +178,11 @@ async function sendGuess() {
     }
 }
 
-// --- INITIALIZATION ---
-
+// --- 4. OPPSTART & EVENT LISTENERS ---
 document.addEventListener('DOMContentLoaded', () => {
     updateHeaderButton(); 
 
     const regionButtons = document.querySelectorAll('.region-btn');
-    
     regionButtons.forEach(btn => {
         btn.onclick = () => {
             if (isProcessing) return;

@@ -1,3 +1,4 @@
+// --- 1. KONFIGURASJON & INITIALISERING ---
 const API_BASE = 'https://poke-guessr.onrender.com';
 let username = localStorage.getItem('pokemon_user');
 let selectedImageUrl = null;
@@ -14,8 +15,7 @@ async function loadProfile() {
         if (!response.ok) throw new Error("Kunne ikke hente data fra server");
         
         const data = await response.json();
-        console.log("Data mottatt:", data);
-
+        
         document.getElementById('displayUsername').innerText = username;
         document.getElementById('displayPic').src = data.profilePic || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png';
 
@@ -37,7 +37,9 @@ async function loadProfile() {
     }
 }
 
+// --- 2. HÅNDTERING AV POENGSUMMER ---
 async function deleteScore(scoreId) {
+    const username = localStorage.getItem('pokemon_user');
     if (!username || !confirm("Er du sikker på at du vil slette denne poengsummen?")) return;
 
     try {
@@ -46,18 +48,17 @@ async function deleteScore(scoreId) {
         });
 
         if (response.ok) {
-            console.log("Score slettet!");
             loadProfile(); 
         } else {
             const data = await response.json().catch(() => ({}));
             alert("Kunne ikke slette: " + (data.error || "Serverfeil"));
         }
     } catch (err) {
-        console.error("Sletting feilet:", err);
-        alert("Nettverksfeil: Sjekk internettforbindelsen eller om serveren er nede.");
+        alert("Nettverksfeil: Sjekk internettforbindelsen.");
     }
 }
 
+// --- 3. REDIGERING AV PROFIL ---
 async function searchPokemon() {
     const input = document.getElementById('pokemonSearchInput').value.trim().toLowerCase();
     const panel = document.getElementById('searchPreview');
@@ -84,14 +85,11 @@ async function searchPokemon() {
         status.style.display = "none";
         preview.src = selectedImageUrl;
         preview.style.display = "block";
-        
         nameSpan.innerText = data.name; 
         successMsg.style.display = "block"; 
         
     } catch (e) {
         status.innerText = "Fant ikke Pokémon. Prøv igjen.";
-        successMsg.style.display = "none";
-        preview.style.display = "none";
     }
 }
 
@@ -109,8 +107,8 @@ async function saveProfileChanges() {
                 body: JSON.stringify({ oldName, newName })
             });
             localStorage.setItem('pokemon_user', newName);
-            username = newName;
         }
+
         if (selectedImageUrl) {
             await fetch(`${API_BASE}/user/update-pic`, {
                 method: 'POST',
@@ -118,6 +116,7 @@ async function saveProfileChanges() {
                 body: JSON.stringify({ username: localStorage.getItem('pokemon_user'), imageUrl: selectedImageUrl })
             });
         }
+
         if (oldPass && newPass) {
             const res = await fetch(`${API_BASE}/user/update-password`, {
                 method: 'POST',
@@ -127,10 +126,11 @@ async function saveProfileChanges() {
             const d = await res.json();
             if (!d.message) return alert("Passordfeil: " + d.error);
         }
-        location.reload();
+        location.reload(); 
     } catch (e) { alert("Kunne ikke lagre endringer."); }
 }
 
+// --- 4. KONTO-ADMINISTRASJON ---
 async function deleteAccount() {
     const password = document.getElementById('deleteConfirmPassword').value;
     if (!password) return alert("Skriv passord!");
@@ -160,5 +160,13 @@ function logout() {
     localStorage.removeItem('pokemon_user');
     window.location.href = 'login.html';
 }
+
+// --- 5. EKSPORTERING & OPPSTART ---
+window.toggleEdit = toggleEdit;
+window.searchPokemon = searchPokemon;
+window.saveProfileChanges = saveProfileChanges;
+window.deleteAccount = deleteAccount;
+window.deleteScore = deleteScore;
+window.logout = logout;
 
 document.addEventListener('DOMContentLoaded', loadProfile);
