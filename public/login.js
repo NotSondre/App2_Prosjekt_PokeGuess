@@ -1,5 +1,8 @@
 // --- Konfigurasjon og Tilstand ---
-const API_BASE = 'https://poke-guessr.onrender.com';
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8080' 
+    : 'https://poke-guessr.onrender.com';
+
 let mode = 'login'; 
 
 // --- Grensesnitt-logikk ---
@@ -14,13 +17,18 @@ function switchTab(newMode) {
     if (loginTab) loginTab.classList.toggle('active', mode === 'login');
     if (registerTab) registerTab.classList.toggle('active', mode === 'register');
     if (registerOnly) registerOnly.style.display = mode === 'register' ? 'block' : 'none';
-    if (submitBtn) submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
+    
+    if (submitBtn) {
+        submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
+        submitBtn.disabled = false; 
+    }
      
     errorMsg.innerText = ''; 
 }
 
 // --- Autentiserings-logikk ---
 async function handleAuth() {
+    const submitBtn = document.getElementById('submitBtn');
     const usernameInput = document.getElementById('username');
     const passwordInput = document.getElementById('password');
     const consentInput = document.getElementById('consent');
@@ -33,13 +41,18 @@ async function handleAuth() {
         errorMsg.innerText = "Fyll inn alle felt!";
         return;
     }
+    submitBtn.disabled = true;
+    const originalBtnText = submitBtn.innerText;
+    submitBtn.innerText = "Vent litt...";
 
     const endpoint = mode === 'login' ? '/user/login' : '/user/register';
     const body = { username, password };
     
     if (mode === 'register') {
-        if (!consentInput.checked) {
+        if (!consentInput || !consentInput.checked) {
             errorMsg.innerText = "Du må godta lagring av data.";
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalBtnText;
             return;
         }
         body.consent = true;
@@ -60,14 +73,21 @@ async function handleAuth() {
                 window.location.href = 'profile.html'; 
             } else {
                 alert("Bruker opprettet! Du kan nå logge inn.");
+                mode = 'login';
                 switchTab('login');
+                if (passwordInput) passwordInput.value = ''; 
             }
         } else {
             errorMsg.innerText = data.error || "Noe gikk galt.";
         }
     } catch (err) {
         errorMsg.innerText = "Kunne ikke koble til serveren.";
-        console.error(err);
+        console.error("Fetch feil:", err);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = mode === 'login' ? 'Logg inn' : 'Opprett konto';
+        }
     }
 }
 
@@ -78,6 +98,9 @@ window.handleAuth = handleAuth;
 document.addEventListener('DOMContentLoaded', () => {
     const submitBtn = document.getElementById('submitBtn');
     if (submitBtn) {
-        submitBtn.addEventListener('click', handleAuth);
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            handleAuth();
+        });
     }
 });
