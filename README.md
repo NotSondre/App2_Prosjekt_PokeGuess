@@ -1,11 +1,16 @@
-## Feature Map
-1.  **Gjetting:** Hente tilfeldig Pokémon fra PokéAPI og sjekke brukersvar.
-2.  **Brukerkontoer:** Registrering og innlogging (BCrypt for passord).
-3.  **Statistikk:** Lagre antall riktige/feile forsøk i PostgreSQL.
-4.  **PWA:** Installeres på mobil og fungerer offline via Service Workers.
+PokéGuessr Denne applikasjonen lar brukeren gjette Pokémon basert på bilder fra PokéAPI. Den inkluderer et poengsystem for å lagre personlige rekorder og en profilside for administrasjon av brukerdata. En global ledertavle og flere vanskelighetsgrader vil bli lagt til, gitt nok tid.
 
-## Teknisk Arkitektur
-* **Frontend:** Vanilla JavaScript, CSS, HTML5.
-* **Backend:** Node.js
-* **Database:** PostgreSQL (Cloud-hosted).
-* **API:** REST'ish arkitektur for kommunikasjon mellom klient og server.
+Remote URL: https://poke-guessr.onrender.com
+
+Feature Map
+* Gjetting: Hente tilfeldig Pokémon fra PokéAPI og sjekke svar.
+* Brukerkontoer: Registrering og innlogging (BCrypt for passord).
+* Statistikk: Lagre poengsummer i PostgreSQL (Render).
+* Profil: Tilpasning av profilbilde og administrasjon av brukeropplysninger.
+* PWA: Installeres på mobil og fungerer delvis offline via Service Workers.
+
+Teknisk Arkitektur
+* Frontend: Vanilla JavaScript, CSS, HTML5.
+* Backend: Node.js / Express.
+* Database: PostgreSQL (Cloud-hosted).
+* API: REST-arkitektur for kommunikasjon mellom klient og server.
