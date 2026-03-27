@@ -77,6 +77,7 @@ router.post('/register', async (req, res, next) => {
         if (existing) return res.status(409).json({ error: "Brukernavnet er allerede i bruk" });
 
         const hashed = await bcrypt.hash(password.trim(), SALT_ROUNDS);
+        
         await db.query(
             'INSERT INTO users (username, password) VALUES ($1, $2)',
             [username.trim(), hashed]
