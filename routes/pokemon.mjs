@@ -6,7 +6,7 @@ const router = express.Router();
 let usedIds = []; 
 const MAX_HISTORY = 20; 
 
-router.get('/pokemon', async (req, res) => {
+router.get('/pokemon', async (req, res, next) => {
     try {
         const region = req.query.region || 'all';
         
@@ -29,6 +29,8 @@ router.get('/pokemon', async (req, res) => {
         if (usedIds.length > MAX_HISTORY) usedIds.shift();
 
         const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${randomId}`);
+        if (!response.ok) throw new Error("Kunne ikke hente data fra PokéAPI");
+
         const data = await response.json();
         
         const pokemonName = data.name.replace(/-/g, ' ').toLowerCase().trim(); 
@@ -39,22 +41,26 @@ router.get('/pokemon', async (req, res) => {
             name: pokemonName 
         });
     } catch (err) {
-        res.status(500).json({ error: "Kunne ikke hente Pokémon" });
+        next(err);
     }
 });
 
-router.post('/guess', cleanGuess, (req, res) => {
-    const { guess, correctAnswer } = req.body; 
-    
-    if (!guess || !correctAnswer) return res.status(400).json({ error: "Mangler data" });
+router.post('/guess', cleanGuess, (req, res, next) => {
+    try {
+        const { guess, correctAnswer } = req.body; 
+        
+        if (!guess || !correctAnswer) return res.status(400).json({ error: "Mangler data" });
 
-    const shortAnswer = correctAnswer.split(' ')[0];
-    const isCorrect = guess === correctAnswer || guess === shortAnswer;
+        const shortAnswer = correctAnswer.split(' ')[0];
+        const isCorrect = guess === correctAnswer || guess === shortAnswer;
 
-    res.json({ 
-        success: isCorrect, 
-        message: isCorrect ? `Riktig! Det er ${correctAnswer.toUpperCase()}!` : "Feil Pokémon, prøv igjen!" 
-    });
+        res.json({ 
+            success: isCorrect, 
+            message: isCorrect ? `Riktig! Det er ${correctAnswer.toUpperCase()}!` : "Feil Pokémon, prøv igjen!" 
+        });
+    } catch (err) {
+        next(err);
+    }
 });
 
 export default router;

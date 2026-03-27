@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import PokemonRouter from "./routes/pokemon.mjs";
 import UserRouter from "./routes/user.mjs";
+import { errorHandler } from './middleware/errorHandler.mjs';
+
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -25,3 +27,5 @@ app.get('/status', (req, res) => {
 app.listen(port, () => {
     console.log(`Server kjorer pa port ${port}`);
 });
+
+app.use(errorHandler);
