@@ -10,9 +10,11 @@ const pool = new Pool({
 // ---------- Oppstart og tabeller ----------
 export async function initDb() {
     try {
+        await pool.query(`DROP TABLE IF EXISTS users CASCADE;`);
+
         await pool.query(`
             CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
+                id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
                 consented BOOLEAN NOT NULL DEFAULT TRUE,
@@ -29,14 +31,13 @@ export async function initDb() {
                 played_at TIMESTAMP DEFAULT NOW()
             );
         `);
-        console.log("Database klar.");
+        console.log("Database klar med SERIAL ID.");
     } catch (err) {
         console.error("DB Init feil:", err.message);
     }
 }
 
 // ---------- Database-operasjoner ----------
-// Samling av funksjoner som utfører spesifikke handlinger mot databasen
 export const db = {
     async query(text, params) {
         return await pool.query(text, params);
@@ -55,6 +56,7 @@ export const db = {
         return res.rows;
     },
 
+    // Sletter en spesifikk poengsum fra historikken
     async deleteScoreById(id, username) {
         return await pool.query('DELETE FROM scores WHERE id = $1 AND username = $2', [id, username.trim()]);
     }
