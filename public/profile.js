@@ -21,7 +21,6 @@ async function loadProfile() {
 
         const container = document.getElementById('scoreContainer');
         if (data.topScores && data.topScores.length > 0) {
-            // Oppdatert: Lagt til slette-knapp for hver score
             container.innerHTML = data.topScores.map(s => `
                 <div class="score-item" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #f8f9fa; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
                     <span><strong>${s.score}</strong> poeng (${new Date(s.played_at).toLocaleDateString()})</span>
@@ -39,7 +38,6 @@ async function loadProfile() {
 }
 
 async function deleteScore(scoreId) {
-    const username = localStorage.getItem('pokemon_user');
     if (!username || !confirm("Er du sikker på at du vil slette denne poengsummen?")) return;
 
     try {
@@ -111,6 +109,7 @@ async function saveProfileChanges() {
                 body: JSON.stringify({ oldName, newName })
             });
             localStorage.setItem('pokemon_user', newName);
+            username = newName;
         }
         if (selectedImageUrl) {
             await fetch(`${API_BASE}/user/update-pic`, {
@@ -161,12 +160,5 @@ function logout() {
     localStorage.removeItem('pokemon_user');
     window.location.href = 'login.html';
 }
-
-window.toggleEdit = toggleEdit;
-window.searchPokemon = searchPokemon;
-window.saveProfileChanges = saveProfileChanges;
-window.deleteAccount = deleteAccount;
-window.deleteScore = deleteScore;
-window.logout = logout;
 
 document.addEventListener('DOMContentLoaded', loadProfile);
